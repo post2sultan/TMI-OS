@@ -1,7 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
-import { ApprovedPage } from "./pages/ApprovedPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
+import { ApprovedPage } from "./pages/ApprovedPage";
+import { CampaignDetailPage } from "./pages/CampaignDetailPage";
 import { CampaignRadarPage } from "./pages/CampaignRadarPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -16,6 +17,7 @@ export default function App() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/campaign-radar" element={<CampaignRadarPage />} />
+        <Route path="/campaigns/:campaignId" element={<CampaignDetailPage />} />
         <Route path="/review-queue" element={<ReviewQueuePage />} />
         <Route path="/approved" element={<ApprovedPage />} />
         <Route path="/published" element={<PublishedPage />} />

@@ -1,0 +1,122 @@
+import type {
+  ActionResponse,
+  AnalysisResponse,
+  Campaign,
+  CampaignCreateRequest,
+  CampaignListResponse,
+  DiscoverySaveResponse,
+  ReviewListResponse,
+  ServiceStatus,
+} from "../types/api";
+
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+).replace(/\/$/, "");
+
+export class ApiError extends Error {
+  status: number;
+  detail: unknown;
+
+  constructor(message: string, status: number, detail: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      Accept: "application/json",
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...options.headers,
+    },
+  });
+
+  const contentType = response.headers.get("content-type") || "";
+  const payload = contentType.includes("application/json")
+    ? await response.json()
+    : await response.text();
+
+  if (!response.ok) {
+    const message =
+      typeof payload === "object" &&
+      payload !== null &&
+      "detail" in payload
+        ? JSON.stringify(payload.detail)
+        : `Request failed with status ${response.status}`;
+
+    throw new ApiError(message, response.status, payload);
+  }
+
+  return payload as T;
+}
+
+export const api = {
+  health: () => request<ServiceStatus>("/health"),
+  ready: () => request<ServiceStatus>("/ready"),
+
+  listCampaigns: (limit = 100, offset = 0) =>
+    request<CampaignListResponse>(
+      `/campaigns?limit=${limit}&offset=${offset}`,
+    ),
+
+  getCampaign: (campaignId: number) =>
+    request<Campaign>(`/campaigns/${campaignId}`),
+
+  createCampaign: (input: CampaignCreateRequest) =>
+    request<Campaign>("/campaigns", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  discoverAndSave: (prompt: string) =>
+    request<DiscoverySaveResponse>("/discover/save", {
+      method: "POST",
+      body: JSON.stringify({ prompt }),
+    }),
+
+  listReviews: () => request<ReviewListResponse>("/reviews"),
+
+  getLatestAnalysis: (campaignId: number) =>
+    request<AnalysisResponse>(
+      `/campaigns/${campaignId}/analysis/latest`,
+    ),
+
+  analyzeCampaign: (campaignId: number, force = false) =>
+    request<AnalysisResponse>(
+      `/campaigns/${campaignId}/analyze?force=${force}`,
+      { method: "POST" },
+    ),
+
+  approveCampaign: (campaignId: number, approvedBy: string) =>
+    request<ActionResponse>(`/campaigns/${campaignId}/approve`, {
+      method: "POST",
+      body: JSON.stringify({ approved_by: approvedBy }),
+    }),
+
+  rejectCampaign: (
+    campaignId: number,
+    rejectedBy: string,
+    reason: string,
+  ) =>
+    request<ActionResponse>(`/campaigns/${campaignId}/reject`, {
+      method: "POST",
+      body: JSON.stringify({
+        rejected_by: rejectedBy,
+        reason,
+      }),
+    }),
+
+  reanalyzeCampaign: (campaignId: number) =>
+    request<ActionResponse>(`/campaigns/${campaignId}/reanalyze`, {
+      method: "POST",
+    }),
+};
+
+export { API_BASE_URL };
