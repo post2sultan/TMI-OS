@@ -1,0 +1,1343 @@
+﻿{
+    "openapi":  "3.1.0",
+    "info":  {
+                 "title":  "TMI API",
+                 "version":  "0.3.0"
+             },
+    "paths":  {
+                  "/extraction/url":  {
+                                          "post":  {
+                                                       "tags":  [
+                                                                    "Extraction"
+                                                                ],
+                                                       "summary":  "Extract Url",
+                                                       "operationId":  "extract_url_extraction_url_post",
+                                                       "requestBody":  {
+                                                                           "content":  {
+                                                                                           "application/json":  {
+                                                                                                                    "schema":  {
+                                                                                                                                   "$ref":  "#/components/schemas/URLExtractionRequest"
+                                                                                                                               }
+                                                                                                                }
+                                                                                       },
+                                                                           "required":  true
+                                                                       },
+                                                       "responses":  {
+                                                                         "200":  {
+                                                                                     "description":  "Successful Response",
+                                                                                     "content":  {
+                                                                                                     "application/json":  {
+                                                                                                                              "schema":  {
+                                                                                                                                             "$ref":  "#/components/schemas/ExtractionResult"
+                                                                                                                                         }
+                                                                                                                          }
+                                                                                                 }
+                                                                                 },
+                                                                         "422":  {
+                                                                                     "description":  "Validation Error",
+                                                                                     "content":  {
+                                                                                                     "application/json":  {
+                                                                                                                              "schema":  {
+                                                                                                                                             "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                         }
+                                                                                                                          }
+                                                                                                 }
+                                                                                 }
+                                                                     }
+                                                   }
+                                      },
+                  "/extraction/campaigns/{campaign_id}":  {
+                                                              "post":  {
+                                                                           "tags":  [
+                                                                                        "Extraction"
+                                                                                    ],
+                                                                           "summary":  "Extract Campaign",
+                                                                           "operationId":  "extract_campaign_extraction_campaigns__campaign_id__post",
+                                                                           "parameters":  [
+                                                                                              {
+                                                                                                  "name":  "campaign_id",
+                                                                                                  "in":  "path",
+                                                                                                  "required":  true,
+                                                                                                  "schema":  {
+                                                                                                                 "type":  "integer",
+                                                                                                                 "title":  "Campaign Id"
+                                                                                                             }
+                                                                                              }
+                                                                                          ],
+                                                                           "responses":  {
+                                                                                             "200":  {
+                                                                                                         "description":  "Successful Response",
+                                                                                                         "content":  {
+                                                                                                                         "application/json":  {
+                                                                                                                                                  "schema":  {
+                                                                                                                                                                 "$ref":  "#/components/schemas/CampaignExtractionResponse"
+                                                                                                                                                             }
+                                                                                                                                              }
+                                                                                                                     }
+                                                                                                     },
+                                                                                             "422":  {
+                                                                                                         "description":  "Validation Error",
+                                                                                                         "content":  {
+                                                                                                                         "application/json":  {
+                                                                                                                                                  "schema":  {
+                                                                                                                                                                 "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                             }
+                                                                                                                                              }
+                                                                                                                     }
+                                                                                                     }
+                                                                                         }
+                                                                       }
+                                                          },
+                  "/reviews":  {
+                                   "get":  {
+                                               "tags":  [
+                                                            "Reviews"
+                                                        ],
+                                               "summary":  "Get Reviews",
+                                               "operationId":  "get_reviews_reviews_get",
+                                               "responses":  {
+                                                                 "200":  {
+                                                                             "description":  "Successful Response",
+                                                                             "content":  {
+                                                                                             "application/json":  {
+                                                                                                                      "schema":  {
+                                                                                                                                     "$ref":  "#/components/schemas/ReviewList"
+                                                                                                                                 }
+                                                                                                                  }
+                                                                                         }
+                                                                         }
+                                                             }
+                                           }
+                               },
+                  "/campaigns/{campaign_id}/approve":  {
+                                                           "post":  {
+                                                                        "tags":  [
+                                                                                     "Reviews"
+                                                                                 ],
+                                                                        "summary":  "Approve Campaign",
+                                                                        "operationId":  "approve_campaign_campaigns__campaign_id__approve_post",
+                                                                        "parameters":  [
+                                                                                           {
+                                                                                               "name":  "campaign_id",
+                                                                                               "in":  "path",
+                                                                                               "required":  true,
+                                                                                               "schema":  {
+                                                                                                              "type":  "integer",
+                                                                                                              "title":  "Campaign Id"
+                                                                                                          }
+                                                                                           }
+                                                                                       ],
+                                                                        "requestBody":  {
+                                                                                            "required":  true,
+                                                                                            "content":  {
+                                                                                                            "application/json":  {
+                                                                                                                                     "schema":  {
+                                                                                                                                                    "$ref":  "#/components/schemas/ApproveRequest"
+                                                                                                                                                }
+                                                                                                                                 }
+                                                                                                        }
+                                                                                        },
+                                                                        "responses":  {
+                                                                                          "200":  {
+                                                                                                      "description":  "Successful Response",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "type":  "object",
+                                                                                                                                                              "additionalProperties":  {
+                                                                                                                                                                                           "type":  "string"
+                                                                                                                                                                                       },
+                                                                                                                                                              "title":  "Response Approve Campaign Campaigns  Campaign Id  Approve Post"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  },
+                                                                                          "422":  {
+                                                                                                      "description":  "Validation Error",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  }
+                                                                                      }
+                                                                    }
+                                                       },
+                  "/campaigns/{campaign_id}/reject":  {
+                                                          "post":  {
+                                                                       "tags":  [
+                                                                                    "Reviews"
+                                                                                ],
+                                                                       "summary":  "Reject Campaign",
+                                                                       "operationId":  "reject_campaign_campaigns__campaign_id__reject_post",
+                                                                       "parameters":  [
+                                                                                          {
+                                                                                              "name":  "campaign_id",
+                                                                                              "in":  "path",
+                                                                                              "required":  true,
+                                                                                              "schema":  {
+                                                                                                             "type":  "integer",
+                                                                                                             "title":  "Campaign Id"
+                                                                                                         }
+                                                                                          }
+                                                                                      ],
+                                                                       "requestBody":  {
+                                                                                           "required":  true,
+                                                                                           "content":  {
+                                                                                                           "application/json":  {
+                                                                                                                                    "schema":  {
+                                                                                                                                                   "$ref":  "#/components/schemas/RejectRequest"
+                                                                                                                                               }
+                                                                                                                                }
+                                                                                                       }
+                                                                                       },
+                                                                       "responses":  {
+                                                                                         "200":  {
+                                                                                                     "description":  "Successful Response",
+                                                                                                     "content":  {
+                                                                                                                     "application/json":  {
+                                                                                                                                              "schema":  {
+                                                                                                                                                             "type":  "object",
+                                                                                                                                                             "additionalProperties":  {
+                                                                                                                                                                                          "type":  "string"
+                                                                                                                                                                                      },
+                                                                                                                                                             "title":  "Response Reject Campaign Campaigns  Campaign Id  Reject Post"
+                                                                                                                                                         }
+                                                                                                                                          }
+                                                                                                                 }
+                                                                                                 },
+                                                                                         "422":  {
+                                                                                                     "description":  "Validation Error",
+                                                                                                     "content":  {
+                                                                                                                     "application/json":  {
+                                                                                                                                              "schema":  {
+                                                                                                                                                             "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                         }
+                                                                                                                                          }
+                                                                                                                 }
+                                                                                                 }
+                                                                                     }
+                                                                   }
+                                                      },
+                  "/campaigns/{campaign_id}/reanalyze":  {
+                                                             "post":  {
+                                                                          "tags":  [
+                                                                                       "Reviews"
+                                                                                   ],
+                                                                          "summary":  "Reanalyze Campaign",
+                                                                          "operationId":  "reanalyze_campaign_campaigns__campaign_id__reanalyze_post",
+                                                                          "parameters":  [
+                                                                                             {
+                                                                                                 "name":  "campaign_id",
+                                                                                                 "in":  "path",
+                                                                                                 "required":  true,
+                                                                                                 "schema":  {
+                                                                                                                "type":  "integer",
+                                                                                                                "title":  "Campaign Id"
+                                                                                                            }
+                                                                                             }
+                                                                                         ],
+                                                                          "responses":  {
+                                                                                            "200":  {
+                                                                                                        "description":  "Successful Response",
+                                                                                                        "content":  {
+                                                                                                                        "application/json":  {
+                                                                                                                                                 "schema":  {
+                                                                                                                                                                "type":  "object",
+                                                                                                                                                                "additionalProperties":  {
+                                                                                                                                                                                             "type":  "string"
+                                                                                                                                                                                         },
+                                                                                                                                                                "title":  "Response Reanalyze Campaign Campaigns  Campaign Id  Reanalyze Post"
+                                                                                                                                                            }
+                                                                                                                                             }
+                                                                                                                    }
+                                                                                                    },
+                                                                                            "422":  {
+                                                                                                        "description":  "Validation Error",
+                                                                                                        "content":  {
+                                                                                                                        "application/json":  {
+                                                                                                                                                 "schema":  {
+                                                                                                                                                                "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                            }
+                                                                                                                                             }
+                                                                                                                    }
+                                                                                                    }
+                                                                                        }
+                                                                      }
+                                                         },
+                  "/health":  {
+                                  "get":  {
+                                              "tags":  [
+                                                           "Operations"
+                                                       ],
+                                              "summary":  "Health",
+                                              "operationId":  "health_health_get",
+                                              "responses":  {
+                                                                "200":  {
+                                                                            "description":  "Successful Response",
+                                                                            "content":  {
+                                                                                            "application/json":  {
+                                                                                                                     "schema":  {
+                                                                                                                                    "additionalProperties":  {
+                                                                                                                                                                 "type":  "string"
+                                                                                                                                                             },
+                                                                                                                                    "type":  "object",
+                                                                                                                                    "title":  "Response Health Health Get"
+                                                                                                                                }
+                                                                                                                 }
+                                                                                        }
+                                                                        }
+                                                            }
+                                          }
+                              },
+                  "/ready":  {
+                                 "get":  {
+                                             "tags":  [
+                                                          "Operations"
+                                                      ],
+                                             "summary":  "Ready",
+                                             "operationId":  "ready_ready_get",
+                                             "responses":  {
+                                                               "200":  {
+                                                                           "description":  "Successful Response",
+                                                                           "content":  {
+                                                                                           "application/json":  {
+                                                                                                                    "schema":  {
+                                                                                                                                   "additionalProperties":  {
+                                                                                                                                                                "type":  "string"
+                                                                                                                                                            },
+                                                                                                                                   "type":  "object",
+                                                                                                                                   "title":  "Response Ready Ready Get"
+                                                                                                                               }
+                                                                                                                }
+                                                                                       }
+                                                                       }
+                                                           }
+                                         }
+                             },
+                  "/":  {
+                            "get":  {
+                                        "summary":  "Home",
+                                        "operationId":  "home__get",
+                                        "responses":  {
+                                                          "200":  {
+                                                                      "description":  "Successful Response",
+                                                                      "content":  {
+                                                                                      "application/json":  {
+                                                                                                               "schema":  {
+                                                                                                                              "additionalProperties":  {
+                                                                                                                                                           "type":  "string"
+                                                                                                                                                       },
+                                                                                                                              "type":  "object",
+                                                                                                                              "title":  "Response Home  Get"
+                                                                                                                          }
+                                                                                                           }
+                                                                                  }
+                                                                  }
+                                                      }
+                                    }
+                        },
+                  "/prompt":  {
+                                  "get":  {
+                                              "summary":  "Get Prompt",
+                                              "operationId":  "get_prompt_prompt_get",
+                                              "responses":  {
+                                                                "200":  {
+                                                                            "description":  "Successful Response",
+                                                                            "content":  {
+                                                                                            "application/json":  {
+                                                                                                                     "schema":  {
+                                                                                                                                    "additionalProperties":  {
+                                                                                                                                                                 "type":  "string"
+                                                                                                                                                             },
+                                                                                                                                    "type":  "object",
+                                                                                                                                    "title":  "Response Get Prompt Prompt Get"
+                                                                                                                                }
+                                                                                                                 }
+                                                                                        }
+                                                                        }
+                                                            }
+                                          }
+                              },
+                  "/discover":  {
+                                    "post":  {
+                                                 "summary":  "Discover",
+                                                 "operationId":  "discover_discover_post",
+                                                 "requestBody":  {
+                                                                     "content":  {
+                                                                                     "application/json":  {
+                                                                                                              "schema":  {
+                                                                                                                             "$ref":  "#/components/schemas/PromptRequest"
+                                                                                                                         }
+                                                                                                          }
+                                                                                 },
+                                                                     "required":  true
+                                                                 },
+                                                 "responses":  {
+                                                                   "200":  {
+                                                                               "description":  "Successful Response",
+                                                                               "content":  {
+                                                                                               "application/json":  {
+                                                                                                                        "schema":  {
+                                                                                                                                       "title":  "Response Discover Discover Post"
+                                                                                                                                   }
+                                                                                                                    }
+                                                                                           }
+                                                                           },
+                                                                   "422":  {
+                                                                               "description":  "Validation Error",
+                                                                               "content":  {
+                                                                                               "application/json":  {
+                                                                                                                        "schema":  {
+                                                                                                                                       "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                   }
+                                                                                                                    }
+                                                                                           }
+                                                                           }
+                                                               }
+                                             }
+                                },
+                  "/discover/save":  {
+                                         "post":  {
+                                                      "summary":  "Discover And Save",
+                                                      "operationId":  "discover_and_save_discover_save_post",
+                                                      "requestBody":  {
+                                                                          "content":  {
+                                                                                          "application/json":  {
+                                                                                                                   "schema":  {
+                                                                                                                                  "$ref":  "#/components/schemas/PromptRequest"
+                                                                                                                              }
+                                                                                                               }
+                                                                                      },
+                                                                          "required":  true
+                                                                      },
+                                                      "responses":  {
+                                                                        "201":  {
+                                                                                    "description":  "Successful Response",
+                                                                                    "content":  {
+                                                                                                    "application/json":  {
+                                                                                                                             "schema":  {
+                                                                                                                                            "$ref":  "#/components/schemas/DiscoverySaveResponse"
+                                                                                                                                        }
+                                                                                                                         }
+                                                                                                }
+                                                                                },
+                                                                        "422":  {
+                                                                                    "description":  "Validation Error",
+                                                                                    "content":  {
+                                                                                                    "application/json":  {
+                                                                                                                             "schema":  {
+                                                                                                                                            "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                        }
+                                                                                                                         }
+                                                                                                }
+                                                                                }
+                                                                    }
+                                                  }
+                                     },
+                  "/generate":  {
+                                    "post":  {
+                                                 "summary":  "Generate",
+                                                 "operationId":  "generate_generate_post",
+                                                 "requestBody":  {
+                                                                     "content":  {
+                                                                                     "application/json":  {
+                                                                                                              "schema":  {
+                                                                                                                             "$ref":  "#/components/schemas/PromptRequest"
+                                                                                                                         }
+                                                                                                          }
+                                                                                 },
+                                                                     "required":  true
+                                                                 },
+                                                 "responses":  {
+                                                                   "200":  {
+                                                                               "description":  "Successful Response",
+                                                                               "content":  {
+                                                                                               "application/json":  {
+                                                                                                                        "schema":  {
+                                                                                                                                       "title":  "Response Generate Generate Post"
+                                                                                                                                   }
+                                                                                                                    }
+                                                                                           }
+                                                                           },
+                                                                   "422":  {
+                                                                               "description":  "Validation Error",
+                                                                               "content":  {
+                                                                                               "application/json":  {
+                                                                                                                        "schema":  {
+                                                                                                                                       "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                   }
+                                                                                                                    }
+                                                                                           }
+                                                                           }
+                                                               }
+                                             }
+                                },
+                  "/campaigns":  {
+                                     "post":  {
+                                                  "summary":  "Create Campaign",
+                                                  "operationId":  "create_campaign_campaigns_post",
+                                                  "requestBody":  {
+                                                                      "required":  true,
+                                                                      "content":  {
+                                                                                      "application/json":  {
+                                                                                                               "schema":  {
+                                                                                                                              "$ref":  "#/components/schemas/CampaignCreateRequest"
+                                                                                                                          }
+                                                                                                           }
+                                                                                  }
+                                                                  },
+                                                  "responses":  {
+                                                                    "201":  {
+                                                                                "description":  "Successful Response",
+                                                                                "content":  {
+                                                                                                "application/json":  {
+                                                                                                                         "schema":  {
+                                                                                                                                        "$ref":  "#/components/schemas/CampaignResponse"
+                                                                                                                                    }
+                                                                                                                     }
+                                                                                            }
+                                                                            },
+                                                                    "422":  {
+                                                                                "description":  "Validation Error",
+                                                                                "content":  {
+                                                                                                "application/json":  {
+                                                                                                                         "schema":  {
+                                                                                                                                        "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                    }
+                                                                                                                     }
+                                                                                            }
+                                                                            }
+                                                                }
+                                              },
+                                     "get":  {
+                                                 "summary":  "List Campaigns",
+                                                 "operationId":  "list_campaigns_campaigns_get",
+                                                 "parameters":  [
+                                                                    {
+                                                                        "name":  "limit",
+                                                                        "in":  "query",
+                                                                        "required":  false,
+                                                                        "schema":  {
+                                                                                       "type":  "integer",
+                                                                                       "default":  20,
+                                                                                       "title":  "Limit"
+                                                                                   }
+                                                                    },
+                                                                    {
+                                                                        "name":  "offset",
+                                                                        "in":  "query",
+                                                                        "required":  false,
+                                                                        "schema":  {
+                                                                                       "type":  "integer",
+                                                                                       "default":  0,
+                                                                                       "title":  "Offset"
+                                                                                   }
+                                                                    }
+                                                                ],
+                                                 "responses":  {
+                                                                   "200":  {
+                                                                               "description":  "Successful Response",
+                                                                               "content":  {
+                                                                                               "application/json":  {
+                                                                                                                        "schema":  {
+                                                                                                                                       "$ref":  "#/components/schemas/CampaignListResponse"
+                                                                                                                                   }
+                                                                                                                    }
+                                                                                           }
+                                                                           },
+                                                                   "422":  {
+                                                                               "description":  "Validation Error",
+                                                                               "content":  {
+                                                                                               "application/json":  {
+                                                                                                                        "schema":  {
+                                                                                                                                       "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                   }
+                                                                                                                    }
+                                                                                           }
+                                                                           }
+                                                               }
+                                             }
+                                 },
+                  "/campaigns/{campaign_id}":  {
+                                                   "get":  {
+                                                               "summary":  "Get Campaign",
+                                                               "operationId":  "get_campaign_campaigns__campaign_id__get",
+                                                               "parameters":  [
+                                                                                  {
+                                                                                      "name":  "campaign_id",
+                                                                                      "in":  "path",
+                                                                                      "required":  true,
+                                                                                      "schema":  {
+                                                                                                     "type":  "integer",
+                                                                                                     "title":  "Campaign Id"
+                                                                                                 }
+                                                                                  }
+                                                                              ],
+                                                               "responses":  {
+                                                                                 "200":  {
+                                                                                             "description":  "Successful Response",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/CampaignResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "422":  {
+                                                                                             "description":  "Validation Error",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         }
+                                                                             }
+                                                           }
+                                               },
+                  "/campaigns/{campaign_id}/analyze":  {
+                                                           "post":  {
+                                                                        "summary":  "Analyze Campaign",
+                                                                        "operationId":  "analyze_campaign_campaigns__campaign_id__analyze_post",
+                                                                        "parameters":  [
+                                                                                           {
+                                                                                               "name":  "campaign_id",
+                                                                                               "in":  "path",
+                                                                                               "required":  true,
+                                                                                               "schema":  {
+                                                                                                              "type":  "integer",
+                                                                                                              "title":  "Campaign Id"
+                                                                                                          }
+                                                                                           },
+                                                                                           {
+                                                                                               "name":  "force",
+                                                                                               "in":  "query",
+                                                                                               "required":  false,
+                                                                                               "schema":  {
+                                                                                                              "type":  "boolean",
+                                                                                                              "default":  false,
+                                                                                                              "title":  "Force"
+                                                                                                          }
+                                                                                           }
+                                                                                       ],
+                                                                        "responses":  {
+                                                                                          "201":  {
+                                                                                                      "description":  "Successful Response",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/AnalysisResponse"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  },
+                                                                                          "422":  {
+                                                                                                      "description":  "Validation Error",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  }
+                                                                                      }
+                                                                    }
+                                                       },
+                  "/campaigns/{campaign_id}/analysis/latest":  {
+                                                                   "get":  {
+                                                                               "summary":  "Get Latest Campaign Analysis",
+                                                                               "operationId":  "get_latest_campaign_analysis_campaigns__campaign_id__analysis_latest_get",
+                                                                               "parameters":  [
+                                                                                                  {
+                                                                                                      "name":  "campaign_id",
+                                                                                                      "in":  "path",
+                                                                                                      "required":  true,
+                                                                                                      "schema":  {
+                                                                                                                     "type":  "integer",
+                                                                                                                     "title":  "Campaign Id"
+                                                                                                                 }
+                                                                                                  }
+                                                                                              ],
+                                                                               "responses":  {
+                                                                                                 "200":  {
+                                                                                                             "description":  "Successful Response",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/AnalysisResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "422":  {
+                                                                                                             "description":  "Validation Error",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         }
+                                                                                             }
+                                                                           }
+                                                               }
+              },
+    "components":  {
+                       "schemas":  {
+                                       "AnalysisResponse":  {
+                                                                "properties":  {
+                                                                                   "id":  {
+                                                                                              "type":  "integer",
+                                                                                              "title":  "Id"
+                                                                                          },
+                                                                                   "campaign_id":  {
+                                                                                                       "type":  "integer",
+                                                                                                       "title":  "Campaign Id"
+                                                                                                   },
+                                                                                   "total_score":  {
+                                                                                                       "type":  "number",
+                                                                                                       "title":  "Total Score"
+                                                                                                   },
+                                                                                   "confidence":  {
+                                                                                                      "type":  "number",
+                                                                                                      "title":  "Confidence"
+                                                                                                  },
+                                                                                   "framework_name":  {
+                                                                                                          "type":  "string",
+                                                                                                          "title":  "Framework Name"
+                                                                                                      },
+                                                                                   "framework_version":  {
+                                                                                                             "type":  "string",
+                                                                                                             "title":  "Framework Version"
+                                                                                                         },
+                                                                                   "constitution_version":  {
+                                                                                                                "type":  "string",
+                                                                                                                "title":  "Constitution Version"
+                                                                                                            },
+                                                                                   "model_name":  {
+                                                                                                      "type":  "string",
+                                                                                                      "title":  "Model Name"
+                                                                                                  },
+                                                                                   "summary":  {
+                                                                                                   "type":  "string",
+                                                                                                   "title":  "Summary"
+                                                                                               },
+                                                                                   "strengths":  {
+                                                                                                     "items":  {
+
+                                                                                                               },
+                                                                                                     "type":  "array",
+                                                                                                     "title":  "Strengths"
+                                                                                                 },
+                                                                                   "weaknesses":  {
+                                                                                                      "items":  {
+
+                                                                                                                },
+                                                                                                      "type":  "array",
+                                                                                                      "title":  "Weaknesses"
+                                                                                                  },
+                                                                                   "recommendations":  {
+                                                                                                           "items":  {
+
+                                                                                                                     },
+                                                                                                           "type":  "array",
+                                                                                                           "title":  "Recommendations"
+                                                                                                       },
+                                                                                   "dimensions":  {
+                                                                                                      "items":  {
+
+                                                                                                                },
+                                                                                                      "type":  "array",
+                                                                                                      "title":  "Dimensions"
+                                                                                                  },
+                                                                                   "created_at":  {
+                                                                                                      "type":  "string",
+                                                                                                      "format":  "date-time",
+                                                                                                      "title":  "Created At"
+                                                                                                  }
+                                                                               },
+                                                                "type":  "object",
+                                                                "required":  [
+                                                                                 "id",
+                                                                                 "campaign_id",
+                                                                                 "total_score",
+                                                                                 "confidence",
+                                                                                 "framework_name",
+                                                                                 "framework_version",
+                                                                                 "constitution_version",
+                                                                                 "model_name",
+                                                                                 "summary",
+                                                                                 "strengths",
+                                                                                 "weaknesses",
+                                                                                 "recommendations",
+                                                                                 "dimensions",
+                                                                                 "created_at"
+                                                                             ],
+                                                                "title":  "AnalysisResponse"
+                                                            },
+                                       "ApproveRequest":  {
+                                                              "properties":  {
+                                                                                 "approved_by":  {
+                                                                                                     "type":  "string",
+                                                                                                     "title":  "Approved By"
+                                                                                                 }
+                                                                             },
+                                                              "type":  "object",
+                                                              "required":  [
+                                                                               "approved_by"
+                                                                           ],
+                                                              "title":  "ApproveRequest"
+                                                          },
+                                       "CampaignCreateRequest":  {
+                                                                     "properties":  {
+                                                                                        "title":  {
+                                                                                                      "type":  "string",
+                                                                                                      "maxLength":  500,
+                                                                                                      "minLength":  1,
+                                                                                                      "title":  "Title"
+                                                                                                  },
+                                                                                        "url":  {
+                                                                                                    "type":  "string",
+                                                                                                    "minLength":  1,
+                                                                                                    "title":  "Url"
+                                                                                                },
+                                                                                        "source":  {
+                                                                                                       "type":  "string",
+                                                                                                       "maxLength":  100,
+                                                                                                       "minLength":  1,
+                                                                                                       "title":  "Source"
+                                                                                                   },
+                                                                                        "description":  {
+                                                                                                            "type":  "string",
+                                                                                                            "title":  "Description",
+                                                                                                            "default":  ""
+                                                                                                        },
+                                                                                        "content":  {
+                                                                                                        "type":  "string",
+                                                                                                        "title":  "Content",
+                                                                                                        "default":  ""
+                                                                                                    }
+                                                                                    },
+                                                                     "type":  "object",
+                                                                     "required":  [
+                                                                                      "title",
+                                                                                      "url",
+                                                                                      "source"
+                                                                                  ],
+                                                                     "title":  "CampaignCreateRequest"
+                                                                 },
+                                       "CampaignExtractionResponse":  {
+                                                                          "properties":  {
+                                                                                             "url":  {
+                                                                                                         "type":  "string",
+                                                                                                         "title":  "Url"
+                                                                                                     },
+                                                                                             "final_url":  {
+                                                                                                               "type":  "string",
+                                                                                                               "title":  "Final Url"
+                                                                                                           },
+                                                                                             "title":  {
+                                                                                                           "type":  "string",
+                                                                                                           "title":  "Title",
+                                                                                                           "default":  ""
+                                                                                                       },
+                                                                                             "description":  {
+                                                                                                                 "type":  "string",
+                                                                                                                 "title":  "Description",
+                                                                                                                 "default":  ""
+                                                                                                             },
+                                                                                             "author":  {
+                                                                                                            "type":  "string",
+                                                                                                            "title":  "Author",
+                                                                                                            "default":  ""
+                                                                                                        },
+                                                                                             "publisher":  {
+                                                                                                               "type":  "string",
+                                                                                                               "title":  "Publisher",
+                                                                                                               "default":  ""
+                                                                                                           },
+                                                                                             "language":  {
+                                                                                                              "type":  "string",
+                                                                                                              "title":  "Language",
+                                                                                                              "default":  ""
+                                                                                                          },
+                                                                                             "published_at":  {
+                                                                                                                  "anyOf":  [
+                                                                                                                                {
+                                                                                                                                    "type":  "string",
+                                                                                                                                    "format":  "date-time"
+                                                                                                                                },
+                                                                                                                                {
+                                                                                                                                    "type":  "null"
+                                                                                                                                }
+                                                                                                                            ],
+                                                                                                                  "title":  "Published At"
+                                                                                                              },
+                                                                                             "hero_image":  {
+                                                                                                                "type":  "string",
+                                                                                                                "title":  "Hero Image",
+                                                                                                                "default":  ""
+                                                                                                            },
+                                                                                             "content":  {
+                                                                                                             "type":  "string",
+                                                                                                             "title":  "Content",
+                                                                                                             "default":  ""
+                                                                                                         },
+                                                                                             "markdown":  {
+                                                                                                              "type":  "string",
+                                                                                                              "title":  "Markdown",
+                                                                                                              "default":  ""
+                                                                                                          },
+                                                                                             "word_count":  {
+                                                                                                                "type":  "integer",
+                                                                                                                "title":  "Word Count",
+                                                                                                                "default":  0
+                                                                                                            },
+                                                                                             "reading_time_minutes":  {
+                                                                                                                          "type":  "integer",
+                                                                                                                          "title":  "Reading Time Minutes",
+                                                                                                                          "default":  0
+                                                                                                                      },
+                                                                                             "extraction_method":  {
+                                                                                                                       "type":  "string",
+                                                                                                                       "title":  "Extraction Method",
+                                                                                                                       "default":  ""
+                                                                                                                   },
+                                                                                             "status":  {
+                                                                                                            "type":  "string",
+                                                                                                            "title":  "Status",
+                                                                                                            "default":  "SUCCESS"
+                                                                                                        },
+                                                                                             "warnings":  {
+                                                                                                              "items":  {
+                                                                                                                            "type":  "string"
+                                                                                                                        },
+                                                                                                              "type":  "array",
+                                                                                                              "title":  "Warnings"
+                                                                                                          },
+                                                                                             "campaign_id":  {
+                                                                                                                 "type":  "integer",
+                                                                                                                 "title":  "Campaign Id"
+                                                                                                             },
+                                                                                             "saved":  {
+                                                                                                           "type":  "boolean",
+                                                                                                           "title":  "Saved"
+                                                                                                       }
+                                                                                         },
+                                                                          "type":  "object",
+                                                                          "required":  [
+                                                                                           "url",
+                                                                                           "final_url",
+                                                                                           "campaign_id",
+                                                                                           "saved"
+                                                                                       ],
+                                                                          "title":  "CampaignExtractionResponse"
+                                                                      },
+                                       "CampaignListResponse":  {
+                                                                    "properties":  {
+                                                                                       "items":  {
+                                                                                                     "items":  {
+                                                                                                                   "$ref":  "#/components/schemas/CampaignResponse"
+                                                                                                               },
+                                                                                                     "type":  "array",
+                                                                                                     "title":  "Items"
+                                                                                                 },
+                                                                                       "total":  {
+                                                                                                     "type":  "integer",
+                                                                                                     "title":  "Total"
+                                                                                                 },
+                                                                                       "limit":  {
+                                                                                                     "type":  "integer",
+                                                                                                     "title":  "Limit"
+                                                                                                 },
+                                                                                       "offset":  {
+                                                                                                      "type":  "integer",
+                                                                                                      "title":  "Offset"
+                                                                                                  }
+                                                                                   },
+                                                                    "type":  "object",
+                                                                    "required":  [
+                                                                                     "items",
+                                                                                     "total",
+                                                                                     "limit",
+                                                                                     "offset"
+                                                                                 ],
+                                                                    "title":  "CampaignListResponse"
+                                                                },
+                                       "CampaignResponse":  {
+                                                                "properties":  {
+                                                                                   "id":  {
+                                                                                              "type":  "integer",
+                                                                                              "title":  "Id"
+                                                                                          },
+                                                                                   "title":  {
+                                                                                                 "type":  "string",
+                                                                                                 "title":  "Title"
+                                                                                             },
+                                                                                   "url":  {
+                                                                                               "type":  "string",
+                                                                                               "title":  "Url"
+                                                                                           },
+                                                                                   "source":  {
+                                                                                                  "type":  "string",
+                                                                                                  "title":  "Source"
+                                                                                              },
+                                                                                   "description":  {
+                                                                                                       "type":  "string",
+                                                                                                       "title":  "Description"
+                                                                                                   },
+                                                                                   "content":  {
+                                                                                                   "type":  "string",
+                                                                                                   "title":  "Content"
+                                                                                               },
+                                                                                   "created_at":  {
+                                                                                                      "type":  "string",
+                                                                                                      "format":  "date-time",
+                                                                                                      "title":  "Created At"
+                                                                                                  }
+                                                                               },
+                                                                "type":  "object",
+                                                                "required":  [
+                                                                                 "id",
+                                                                                 "title",
+                                                                                 "url",
+                                                                                 "source",
+                                                                                 "description",
+                                                                                 "content",
+                                                                                 "created_at"
+                                                                             ],
+                                                                "title":  "CampaignResponse"
+                                                            },
+                                       "DiscoverySaveResponse":  {
+                                                                     "properties":  {
+                                                                                        "query":  {
+                                                                                                      "type":  "string",
+                                                                                                      "title":  "Query"
+                                                                                                  },
+                                                                                        "discovered":  {
+                                                                                                           "type":  "integer",
+                                                                                                           "title":  "Discovered"
+                                                                                                       },
+                                                                                        "qualified":  {
+                                                                                                          "type":  "integer",
+                                                                                                          "title":  "Qualified"
+                                                                                                      },
+                                                                                        "rejected":  {
+                                                                                                         "type":  "integer",
+                                                                                                         "title":  "Rejected"
+                                                                                                     },
+                                                                                        "created":  {
+                                                                                                        "type":  "integer",
+                                                                                                        "title":  "Created"
+                                                                                                    },
+                                                                                        "skipped":  {
+                                                                                                        "type":  "integer",
+                                                                                                        "title":  "Skipped"
+                                                                                                    },
+                                                                                        "rejection_reasons":  {
+                                                                                                                  "additionalProperties":  {
+                                                                                                                                               "type":  "integer"
+                                                                                                                                           },
+                                                                                                                  "type":  "object",
+                                                                                                                  "title":  "Rejection Reasons"
+                                                                                                              },
+                                                                                        "campaign_ids":  {
+                                                                                                             "items":  {
+                                                                                                                           "type":  "integer"
+                                                                                                                       },
+                                                                                                             "type":  "array",
+                                                                                                             "title":  "Campaign Ids"
+                                                                                                         }
+                                                                                    },
+                                                                     "type":  "object",
+                                                                     "required":  [
+                                                                                      "query",
+                                                                                      "discovered",
+                                                                                      "qualified",
+                                                                                      "rejected",
+                                                                                      "created",
+                                                                                      "skipped",
+                                                                                      "rejection_reasons",
+                                                                                      "campaign_ids"
+                                                                                  ],
+                                                                     "title":  "DiscoverySaveResponse"
+                                                                 },
+                                       "ExtractionResult":  {
+                                                                "properties":  {
+                                                                                   "url":  {
+                                                                                               "type":  "string",
+                                                                                               "title":  "Url"
+                                                                                           },
+                                                                                   "final_url":  {
+                                                                                                     "type":  "string",
+                                                                                                     "title":  "Final Url"
+                                                                                                 },
+                                                                                   "title":  {
+                                                                                                 "type":  "string",
+                                                                                                 "title":  "Title",
+                                                                                                 "default":  ""
+                                                                                             },
+                                                                                   "description":  {
+                                                                                                       "type":  "string",
+                                                                                                       "title":  "Description",
+                                                                                                       "default":  ""
+                                                                                                   },
+                                                                                   "author":  {
+                                                                                                  "type":  "string",
+                                                                                                  "title":  "Author",
+                                                                                                  "default":  ""
+                                                                                              },
+                                                                                   "publisher":  {
+                                                                                                     "type":  "string",
+                                                                                                     "title":  "Publisher",
+                                                                                                     "default":  ""
+                                                                                                 },
+                                                                                   "language":  {
+                                                                                                    "type":  "string",
+                                                                                                    "title":  "Language",
+                                                                                                    "default":  ""
+                                                                                                },
+                                                                                   "published_at":  {
+                                                                                                        "anyOf":  [
+                                                                                                                      {
+                                                                                                                          "type":  "string",
+                                                                                                                          "format":  "date-time"
+                                                                                                                      },
+                                                                                                                      {
+                                                                                                                          "type":  "null"
+                                                                                                                      }
+                                                                                                                  ],
+                                                                                                        "title":  "Published At"
+                                                                                                    },
+                                                                                   "hero_image":  {
+                                                                                                      "type":  "string",
+                                                                                                      "title":  "Hero Image",
+                                                                                                      "default":  ""
+                                                                                                  },
+                                                                                   "content":  {
+                                                                                                   "type":  "string",
+                                                                                                   "title":  "Content",
+                                                                                                   "default":  ""
+                                                                                               },
+                                                                                   "markdown":  {
+                                                                                                    "type":  "string",
+                                                                                                    "title":  "Markdown",
+                                                                                                    "default":  ""
+                                                                                                },
+                                                                                   "word_count":  {
+                                                                                                      "type":  "integer",
+                                                                                                      "title":  "Word Count",
+                                                                                                      "default":  0
+                                                                                                  },
+                                                                                   "reading_time_minutes":  {
+                                                                                                                "type":  "integer",
+                                                                                                                "title":  "Reading Time Minutes",
+                                                                                                                "default":  0
+                                                                                                            },
+                                                                                   "extraction_method":  {
+                                                                                                             "type":  "string",
+                                                                                                             "title":  "Extraction Method",
+                                                                                                             "default":  ""
+                                                                                                         },
+                                                                                   "status":  {
+                                                                                                  "type":  "string",
+                                                                                                  "title":  "Status",
+                                                                                                  "default":  "SUCCESS"
+                                                                                              },
+                                                                                   "warnings":  {
+                                                                                                    "items":  {
+                                                                                                                  "type":  "string"
+                                                                                                              },
+                                                                                                    "type":  "array",
+                                                                                                    "title":  "Warnings"
+                                                                                                }
+                                                                               },
+                                                                "type":  "object",
+                                                                "required":  [
+                                                                                 "url",
+                                                                                 "final_url"
+                                                                             ],
+                                                                "title":  "ExtractionResult"
+                                                            },
+                                       "HTTPValidationError":  {
+                                                                   "properties":  {
+                                                                                      "detail":  {
+                                                                                                     "items":  {
+                                                                                                                   "$ref":  "#/components/schemas/ValidationError"
+                                                                                                               },
+                                                                                                     "type":  "array",
+                                                                                                     "title":  "Detail"
+                                                                                                 }
+                                                                                  },
+                                                                   "type":  "object",
+                                                                   "title":  "HTTPValidationError"
+                                                               },
+                                       "PromptRequest":  {
+                                                             "properties":  {
+                                                                                "prompt":  {
+                                                                                               "type":  "string",
+                                                                                               "title":  "Prompt"
+                                                                                           }
+                                                                            },
+                                                             "type":  "object",
+                                                             "required":  [
+                                                                              "prompt"
+                                                                          ],
+                                                             "title":  "PromptRequest"
+                                                         },
+                                       "RejectRequest":  {
+                                                             "properties":  {
+                                                                                "rejected_by":  {
+                                                                                                    "type":  "string",
+                                                                                                    "title":  "Rejected By"
+                                                                                                },
+                                                                                "reason":  {
+                                                                                               "type":  "string",
+                                                                                               "title":  "Reason"
+                                                                                           }
+                                                                            },
+                                                             "type":  "object",
+                                                             "required":  [
+                                                                              "rejected_by",
+                                                                              "reason"
+                                                                          ],
+                                                             "title":  "RejectRequest"
+                                                         },
+                                       "ReviewItem":  {
+                                                          "properties":  {
+                                                                             "campaign_id":  {
+                                                                                                 "type":  "integer",
+                                                                                                 "title":  "Campaign Id"
+                                                                                             },
+                                                                             "campaign_title":  {
+                                                                                                    "type":  "string",
+                                                                                                    "title":  "Campaign Title"
+                                                                                                },
+                                                                             "campaign_status":  {
+                                                                                                     "anyOf":  [
+                                                                                                                   {
+                                                                                                                       "type":  "string"
+                                                                                                                   },
+                                                                                                                   {
+                                                                                                                       "type":  "null"
+                                                                                                                   }
+                                                                                                               ],
+                                                                                                     "title":  "Campaign Status"
+                                                                                                 },
+                                                                             "analysis_id":  {
+                                                                                                 "type":  "integer",
+                                                                                                 "title":  "Analysis Id"
+                                                                                             },
+                                                                             "total_score":  {
+                                                                                                 "type":  "number",
+                                                                                                 "title":  "Total Score"
+                                                                                             },
+                                                                             "confidence":  {
+                                                                                                "type":  "number",
+                                                                                                "title":  "Confidence"
+                                                                                            },
+                                                                             "summary":  {
+                                                                                             "type":  "string",
+                                                                                             "title":  "Summary"
+                                                                                         },
+                                                                             "review_status":  {
+                                                                                                   "type":  "string",
+                                                                                                   "title":  "Review Status"
+                                                                                               },
+                                                                             "created_at":  {
+                                                                                                "type":  "string",
+                                                                                                "format":  "date-time",
+                                                                                                "title":  "Created At"
+                                                                                            }
+                                                                         },
+                                                          "type":  "object",
+                                                          "required":  [
+                                                                           "campaign_id",
+                                                                           "campaign_title",
+                                                                           "analysis_id",
+                                                                           "total_score",
+                                                                           "confidence",
+                                                                           "summary",
+                                                                           "review_status",
+                                                                           "created_at"
+                                                                       ],
+                                                          "title":  "ReviewItem"
+                                                      },
+                                       "ReviewList":  {
+                                                          "properties":  {
+                                                                             "items":  {
+                                                                                           "items":  {
+                                                                                                         "$ref":  "#/components/schemas/ReviewItem"
+                                                                                                     },
+                                                                                           "type":  "array",
+                                                                                           "title":  "Items"
+                                                                                       },
+                                                                             "total":  {
+                                                                                           "type":  "integer",
+                                                                                           "title":  "Total"
+                                                                                       }
+                                                                         },
+                                                          "type":  "object",
+                                                          "required":  [
+                                                                           "items",
+                                                                           "total"
+                                                                       ],
+                                                          "title":  "ReviewList"
+                                                      },
+                                       "URLExtractionRequest":  {
+                                                                    "properties":  {
+                                                                                       "url":  {
+                                                                                                   "type":  "string",
+                                                                                                   "minLength":  1,
+                                                                                                   "title":  "Url"
+                                                                                               }
+                                                                                   },
+                                                                    "type":  "object",
+                                                                    "required":  [
+                                                                                     "url"
+                                                                                 ],
+                                                                    "title":  "URLExtractionRequest"
+                                                                },
+                                       "ValidationError":  {
+                                                               "properties":  {
+                                                                                  "loc":  {
+                                                                                              "items":  {
+                                                                                                            "anyOf":  [
+                                                                                                                          {
+                                                                                                                              "type":  "string"
+                                                                                                                          },
+                                                                                                                          {
+                                                                                                                              "type":  "integer"
+                                                                                                                          }
+                                                                                                                      ]
+                                                                                                        },
+                                                                                              "type":  "array",
+                                                                                              "title":  "Location"
+                                                                                          },
+                                                                                  "msg":  {
+                                                                                              "type":  "string",
+                                                                                              "title":  "Message"
+                                                                                          },
+                                                                                  "type":  {
+                                                                                               "type":  "string",
+                                                                                               "title":  "Error Type"
+                                                                                           }
+                                                                              },
+                                                               "type":  "object",
+                                                               "required":  [
+                                                                                "loc",
+                                                                                "msg",
+                                                                                "type"
+                                                                            ],
+                                                               "title":  "ValidationError"
+                                                           }
+                                   }
+                   }
+}

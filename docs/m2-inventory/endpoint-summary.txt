@@ -1,0 +1,76 @@
+﻿LIVE FASTAPI ENDPOINTS
+Source: http://localhost:8000/openapi.json
+Generated: 2026-07-26 00:04:45
+
+POST /extraction/url
+  Summary: Extract Url
+  Operation ID: extract_url_extraction_url_post
+
+POST /extraction/campaigns/{campaign_id}
+  Summary: Extract Campaign
+  Operation ID: extract_campaign_extraction_campaigns__campaign_id__post
+
+GET /reviews
+  Summary: Get Reviews
+  Operation ID: get_reviews_reviews_get
+
+POST /campaigns/{campaign_id}/approve
+  Summary: Approve Campaign
+  Operation ID: approve_campaign_campaigns__campaign_id__approve_post
+
+POST /campaigns/{campaign_id}/reject
+  Summary: Reject Campaign
+  Operation ID: reject_campaign_campaigns__campaign_id__reject_post
+
+POST /campaigns/{campaign_id}/reanalyze
+  Summary: Reanalyze Campaign
+  Operation ID: reanalyze_campaign_campaigns__campaign_id__reanalyze_post
+
+GET /health
+  Summary: Health
+  Operation ID: health_health_get
+
+GET /ready
+  Summary: Ready
+  Operation ID: ready_ready_get
+
+GET /
+  Summary: Home
+  Operation ID: home__get
+
+GET /prompt
+  Summary: Get Prompt
+  Operation ID: get_prompt_prompt_get
+
+POST /discover
+  Summary: Discover
+  Operation ID: discover_discover_post
+
+POST /discover/save
+  Summary: Discover And Save
+  Operation ID: discover_and_save_discover_save_post
+
+POST /generate
+  Summary: Generate
+  Operation ID: generate_generate_post
+
+POST /campaigns
+  Summary: Create Campaign
+  Operation ID: create_campaign_campaigns_post
+
+GET /campaigns
+  Summary: List Campaigns
+  Operation ID: list_campaigns_campaigns_get
+
+GET /campaigns/{campaign_id}
+  Summary: Get Campaign
+  Operation ID: get_campaign_campaigns__campaign_id__get
+
+POST /campaigns/{campaign_id}/analyze
+  Summary: Analyze Campaign
+  Operation ID: analyze_campaign_campaigns__campaign_id__analyze_post
+
+GET /campaigns/{campaign_id}/analysis/latest
+  Summary: Get Latest Campaign Analysis
+  Operation ID: get_latest_campaign_analysis_campaigns__campaign_id__analysis_latest_get
+

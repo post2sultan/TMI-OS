@@ -1,0 +1,5 @@
+﻿8ce1096 feat: build M1 application shell
+4ba4112 chore: add infrastructure and documentation baseline
+67d8d94 feat: add backend application baseline
+b74f163 chore: stabilize repository structure
+1c21569 feat: initialize TMI frontend foundation
