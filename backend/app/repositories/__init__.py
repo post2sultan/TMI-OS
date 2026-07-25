@@ -1,0 +1,1 @@
+from app.repositories.campaign_repository import campaign_repository
