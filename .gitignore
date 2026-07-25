@@ -1,0 +1,138 @@
+# ============================================================
+# TMI OS — Git Ignore
+# ============================================================
+
+# ------------------------------------------------------------
+# Secrets and environment files
+# ------------------------------------------------------------
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# ------------------------------------------------------------
+# Python
+# ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+env/
+ENV/
+pip-wheel-metadata/
+*.egg-info/
+.eggs/
+
+# ------------------------------------------------------------
+# Node / React / Vite
+# ------------------------------------------------------------
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+.vite/
+**/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ------------------------------------------------------------
+# Runtime data and databases
+# ------------------------------------------------------------
+data/
+volumes/
+**/data/postgres/
+**/data/redis/
+**/data/qdrant/
+**/data/ollama/
+*.db
+*.sqlite
+*.sqlite3
+*.pid
+
+# ------------------------------------------------------------
+# Backups, archives and snapshots
+# ------------------------------------------------------------
+backup/
+backups/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+*-snapshot.txt
+sprint*-current-code.txt
+
+# ------------------------------------------------------------
+# Generated media and temporary files
+# ------------------------------------------------------------
+temp/
+tmp/
+media/generated/
+media/output/
+*.tmp
+*.temp
+*.log
+
+# ------------------------------------------------------------
+# AI model files
+# ------------------------------------------------------------
+models/*.bin
+models/*.gguf
+models/*.safetensors
+models/*.onnx
+models/blobs/
+models/manifests/
+
+# ------------------------------------------------------------
+# IDE and editor files
+# ------------------------------------------------------------
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+*.swo
+
+# ------------------------------------------------------------
+# Operating system files
+# ------------------------------------------------------------
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ------------------------------------------------------------
+# Test and coverage output
+# ------------------------------------------------------------
+coverage/
+test-results/
+playwright-report/
+
+# ------------------------------------------------------------
+# Local certificates and keys
+# ------------------------------------------------------------
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# ------------------------------------------------------------
+# Keep directory placeholders
+# ------------------------------------------------------------
+!.gitkeep
