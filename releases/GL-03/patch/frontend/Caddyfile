@@ -1,0 +1,39 @@
+{
+    admin off
+    email {$TMI_TLS_EMAIL}
+}
+
+{$TMI_DOMAIN} {
+    encode zstd gzip
+
+    @health path /healthz
+    respond @health "healthy" 200
+
+    @protected not path /healthz
+    basic_auth @protected {
+        {$TMI_WEB_USER} {$TMI_WEB_PASSWORD_HASH}
+    }
+
+    header @protected {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        Content-Security-Policy "default-src 'self'; connect-src 'self'; font-src 'self' data:; img-src 'self' data: https:; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; base-uri 'self'; frame-ancestors 'none'"
+        -Server
+    }
+
+    handle_path /api/* {
+        reverse_proxy backend:8000 {
+            header_up X-TMI-API-Key {$AUTH_ADMIN_API_KEY}
+            header_up X-TMI-Actor {$TMI_WEB_USER}
+        }
+    }
+
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+}
