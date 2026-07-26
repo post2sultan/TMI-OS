@@ -1,0 +1,17 @@
+﻿                                                                   Table "public.discovery_runs"
+    Column     |           Type           | Collation | Nullable |                  Default                   | Storage  | Compression | Stats target | Description 
+---------------+--------------------------+-----------+----------+--------------------------------------------+----------+-------------+--------------+-------------
+ id            | integer                  |           | not null | nextval('discovery_runs_id_seq'::regclass) | plain    |             |              | 
+ query         | character varying(255)   |           | not null |                                            | extended |             |              | 
+ provider      | character varying(100)   |           | not null |                                            | extended |             |              | 
+ results_found | integer                  |           | not null |                                            | plain    |             |              | 
+ credits_used  | integer                  |           | not null |                                            | plain    |             |              | 
+ duration_ms   | integer                  |           | not null |                                            | plain    |             |              | 
+ status        | character varying(30)    |           | not null |                                            | extended |             |              | 
+ created_at    | timestamp with time zone |           | not null | now()                                      | plain    |             |              | 
+Indexes:
+    "discovery_runs_pkey" PRIMARY KEY, btree (id)
+    "ix_discovery_runs_provider" btree (provider)
+    "ix_discovery_runs_query" btree (query)
+Access method: heap
+

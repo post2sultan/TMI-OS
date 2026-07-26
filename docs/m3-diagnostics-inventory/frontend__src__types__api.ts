@@ -68,23 +68,5 @@ export interface DiscoverySaveResponse {
   campaign_ids: number[];
 }
 
-export interface DiscoveryHistoryItem {
-  id: number;
-  query: string;
-  provider: string;
-  status: string;
-  results_found: number;
-  credits_used: number;
-  duration_ms: number;
-  created_at: string;
-}
-
-export interface DiscoveryHistoryResponse {
-  items: DiscoveryHistoryItem[];
-  total: number;
-  limit: number;
-  offset: number;
-}
-
 export type ServiceStatus = Record<string, string>;
 export type ActionResponse = Record<string, string>;

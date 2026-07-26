@@ -4,7 +4,6 @@ import type {
   Campaign,
   CampaignCreateRequest,
   CampaignListResponse,
-  DiscoveryHistoryResponse,
   DiscoverySaveResponse,
   ReviewListResponse,
   ServiceStatus,
@@ -81,11 +80,6 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ prompt }),
     }),
-
-  listDiscoveryHistory: (limit = 10, offset = 0) =>
-    request<DiscoveryHistoryResponse>(
-      `/discovery/history?limit=${limit}&offset=${offset}`,
-    ),
 
   listReviews: () => request<ReviewListResponse>("/reviews"),
 

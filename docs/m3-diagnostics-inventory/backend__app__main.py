@@ -1,6 +1,5 @@
-from app.api.extraction import router as extraction_router
+﻿from app.api.extraction import router as extraction_router
 from app.routers.reviews import router as reviews_router
-from app.routers.discovery_history import router as discovery_history_router
 from collections.abc import Generator
 from datetime import datetime
 from typing import Any
@@ -19,9 +18,6 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal, database_is_ready
 from app.models.analysis import Analysis
 from app.models.campaign import Campaign
-from app.repositories.discovery_run_repository import (
-    discovery_run_repository,
-)
 from app.services.analysis.pipeline import analysis_pipeline
 from app.services.campaign_analyzer import campaign_analyzer
 from app.services.campaign_fingerprint import (
@@ -42,7 +38,6 @@ app = FastAPI(
 
 app.include_router(extraction_router)
 app.include_router(reviews_router)
-app.include_router(discovery_history_router)
 
 
 class PromptRequest(BaseModel):
@@ -199,7 +194,6 @@ def get_prompt() -> dict[str, str]:
 @app.post("/discover")
 def discover(
     request: PromptRequest,
-    database: Session = Depends(get_db),
 ) -> Any:
     query = request.prompt.strip()
 
@@ -216,12 +210,6 @@ def discover(
         .discover_with_report(
             query
         )
-    )
-
-    discovery_run_repository.persist_report(
-        database=database,
-        query=query,
-        providers=report.providers,
     )
 
     return {
@@ -262,12 +250,6 @@ def discover_and_save(
         .discover_with_report(
             query
         )
-    )
-
-    discovery_run_repository.persist_report(
-        database=database,
-        query=query,
-        providers=report.providers,
     )
 
     discovered_campaigns = (
