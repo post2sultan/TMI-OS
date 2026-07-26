@@ -1,0 +1,10 @@
+{
+  "exceptions": [
+    {
+      "advisory": "GHSA-qwww-vcr4-c8h2",
+      "package": "react-router",
+      "expires": "2026-08-26",
+      "reason": "The advisory affects React Server Components action handling. TMI OS is built and deployed as a static client-only Vite SPA and does not enable RSC or server actions."
+    }
+  ]
+}
