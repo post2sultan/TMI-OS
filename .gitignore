@@ -69,6 +69,7 @@ volumes/
 # ------------------------------------------------------------
 backup/
 backups/
+.latest-backup.txt
 *.zip
 *.tar
 *.tar.gz

@@ -1,0 +1,50 @@
+groups:
+  - name: tmi-availability
+    rules:
+      - alert: TMIBackendUnavailable
+        expr: |
+          probe_success{
+            job="tmi-uptime",
+            instance="http://backend:8000/health"
+          } == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: TMI API is unavailable
+          runbook: docs/OBSERVABILITY.md#response
+
+      - alert: TMIWebUnavailable
+        expr: |
+          probe_success{
+            job="tmi-uptime",
+            instance="http://frontend:80/healthz"
+          } == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: TMI web entry point is unavailable
+          runbook: docs/OBSERVABILITY.md#response
+
+      - alert: TMIDependencyUnavailable
+        expr: tmi_dependency_ready == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: A required TMI dependency is unavailable
+          runbook: docs/OBSERVABILITY.md#response
+
+      - alert: TMIHighServerErrorRate
+        expr: |
+          sum(rate(tmi_http_requests_total{status=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(tmi_http_requests_total[5m])), 0.001)
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: TMI API server error rate exceeds 5 percent
+          runbook: docs/OBSERVABILITY.md#response
