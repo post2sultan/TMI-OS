@@ -1,7 +1,7 @@
 """001_initial_production_schema
 
 Revision ID: ea59eaa9f6c1
-Revises: 
+Revises: 0f1e2d3c4b5a
 Create Date: 2026-07-20 13:38:02.782484
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'ea59eaa9f6c1'
-down_revision: Union[str, Sequence[str], None] = None
+down_revision: Union[str, Sequence[str], None] = "0f1e2d3c4b5a"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -59,6 +59,15 @@ def upgrade() -> None:
     sa.Column('recommendations', sa.JSON(), nullable=False),
     sa.Column('model', sa.String(length=100), nullable=False),
     sa.Column('prompt_version', sa.String(length=30), nullable=False),
+    sa.Column(
+        'review_status',
+        sa.String(length=30),
+        server_default='pending',
+        nullable=False,
+    ),
+    sa.Column('reviewed_by', sa.String(length=255), nullable=True),
+    sa.Column('review_reason', sa.Text(), nullable=True),
+    sa.Column('reviewed_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['campaign_id'], ['campaigns.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
