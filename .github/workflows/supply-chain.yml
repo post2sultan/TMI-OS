@@ -1,0 +1,60 @@
+name: Supply-chain gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Build production images
+        shell: pwsh
+        run: |
+          docker compose --env-file docker/production.env.example `
+            -f docker/compose.production.yml build backend frontend
+
+      - name: Validate dependency and migration policy
+        shell: pwsh
+        run: |
+          ./scripts/validate-supply-chain.ps1 -Root $PWD -SkipRuntime
+
+      - name: Validate backend dependencies and migration graph
+        run: |
+          docker run --rm --entrypoint sh tmi-os-backend:gl-05 -c \
+            "pip check && test \"$(alembic heads | grep -c '(head)')\" = 1"
+
+      - name: Run backend regression tests
+        run: |
+          docker run --rm --entrypoint python \
+            -v "${{ github.workspace }}/backend/tests:/app/tests:ro" \
+            tmi-os-backend:gl-05 \
+            -B -m unittest discover -s /app/tests -p "test_*.py" -q
+
+      - name: Verify production web artifact
+        run: |
+          if docker run --rm --entrypoint sh tmi-os-frontend:gl-05 \
+            -c "grep -R -l 'dev-admin-key' /srv 2>/dev/null" | grep -q .; then
+            echo "Development credentials found in production web artifact."
+            exit 1
+          fi
