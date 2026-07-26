@@ -1,0 +1,169 @@
+name: tmi-production
+
+x-service-security: &service-security
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  postgres:
+    <<: *service-security
+    image: postgres@sha256:de1e13ca94377fa5a27aafd0e9fc200df9692b15152f0090fdf074074ea5e397
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - private
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  ollama:
+    <<: *service-security
+    image: ollama/ollama@sha256:f1a705f2bd113fb8d15f85f7c217f0dc5f6bebda6b0cc42b82c3ad165ffcb9dc
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - private
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  qdrant:
+    <<: *service-security
+    image: qdrant/qdrant@sha256:0bd98fa7977f1e75694779359ca4e212822e5a71334e28421182f72f209d5286
+    environment:
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:?QDRANT_API_KEY is required}
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - private
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - timeout 5 bash -c '</dev/tcp/127.0.0.1/6333'
+      interval: 15s
+      timeout: 6s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    <<: *service-security
+    image: redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    volumes:
+      - redis_data:/data
+    networks:
+      - private
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - redis-cli -a "$${REDIS_PASSWORD}" ping
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  searxng:
+    <<: *service-security
+    image: searxng/searxng@sha256:800a5e3757df04f59e6bd6c622f15de2edbfa47f5591c5b82d4a8ff3b938a845
+    environment:
+      BASE_URL: http://searxng:8080/
+      INSTANCE_NAME: TMI Search
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?SEARXNG_SECRET is required}
+    volumes:
+      - searxng_config:/etc/searxng
+    networks:
+      - private
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  backend:
+    <<: *service-security
+    image: tmi-os-backend:${TMI_RELEASE_TAG:?TMI_RELEASE_TAG is required}
+    pull_policy: never
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: production
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      AUTH_VIEWER_API_KEY: ${AUTH_VIEWER_API_KEY:?AUTH_VIEWER_API_KEY is required}
+      AUTH_OPERATOR_API_KEY: ${AUTH_OPERATOR_API_KEY:?AUTH_OPERATOR_API_KEY is required}
+      AUTH_REVIEWER_API_KEY: ${AUTH_REVIEWER_API_KEY:?AUTH_REVIEWER_API_KEY is required}
+      AUTH_ADMIN_API_KEY: ${AUTH_ADMIN_API_KEY:?AUTH_ADMIN_API_KEY is required}
+      AUTH_READ_RATE_LIMIT_PER_MINUTE: ${AUTH_READ_RATE_LIMIT_PER_MINUTE:-120}
+      AUTH_WRITE_RATE_LIMIT_PER_MINUTE: ${AUTH_WRITE_RATE_LIMIT_PER_MINUTE:-30}
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
+      AI_PRIMARY_MODEL: ${AI_PRIMARY_MODEL:-qwen2.5:3b}
+      AI_FALLBACK_MODELS: ${AI_FALLBACK_MODELS:-}
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_API_KEY: ${QDRANT_API_KEY:?QDRANT_API_KEY is required}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      SEARXNG_URL: http://searxng:8080
+      SERPER_API_KEY: ${SERPER_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      searxng:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${TMI_BACKEND_PORT:-8000}:8000"
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    stop_grace_period: 30s
+    networks:
+      - private
+
+networks:
+  private:
+    name: tmi-production-private
+
+volumes:
+  postgres_data:
+  ollama_data:
+  qdrant_data:
+  redis_data:
+  searxng_config:
+
