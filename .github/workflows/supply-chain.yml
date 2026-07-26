@@ -42,7 +42,7 @@ jobs:
       - name: Validate backend dependencies and migration graph
         run: |
           docker run --rm --entrypoint sh tmi-os-backend:gl-08 -c \
-            "pip check && test \"$(alembic heads | grep -c '(head)')\" = 1"
+            'pip check && alembic heads | grep -c head | grep -qx 1'
 
       - name: Run backend regression tests
         run: |
