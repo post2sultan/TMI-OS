@@ -46,7 +46,7 @@ try {
     docker exec $PostgresContainer rm -f /tmp/tmi-gl04.dump
 
     $QdrantInventoryRaw = docker exec $BackendContainer python -c `
-        "import json,requests; u='http://qdrant:6333'; cs=requests.get(u+'/collections',timeout=10).json()['result']['collections']; print(json.dumps({c['name']:requests.post(u+'/collections/'+c['name']+'/points/count',json={'exact':True},timeout=10).json()['result']['count'] for c in cs}))"
+        "import json,os,requests; u='http://qdrant:6333'; h={'api-key':os.environ['QDRANT_API_KEY']}; cs=requests.get(u+'/collections',headers=h,timeout=10).json()['result']['collections']; print(json.dumps({c['name']:requests.post(u+'/collections/'+c['name']+'/points/count',headers=h,json={'exact':True},timeout=10).json()['result']['count'] for c in cs}))"
     if ($LASTEXITCODE -ne 0) { throw "Qdrant inventory failed." }
     $QdrantInventory = ($QdrantInventoryRaw | Where-Object { $_ -match '^\{' } |
         Select-Object -Last 1 | ConvertFrom-Json)
