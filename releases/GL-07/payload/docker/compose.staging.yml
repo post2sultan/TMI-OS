@@ -1,0 +1,22 @@
+name: tmi-staging
+
+services:
+  backend:
+    ports:
+      - "127.0.0.1:${TMI_STAGING_API_PORT:-18000}:8000"
+
+  frontend:
+    environment:
+      TMI_DOMAIN: ":80"
+    ports: !override
+      - "127.0.0.1:${TMI_STAGING_WEB_PORT:-18080}:80"
+
+  prometheus:
+    ports:
+      - "127.0.0.1:${TMI_STAGING_METRICS_PORT:-19090}:9090"
+
+networks:
+  edge:
+    name: tmi-staging-edge
+  private:
+    name: tmi-staging-private
