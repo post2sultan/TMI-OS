@@ -43,6 +43,17 @@ if (($Existing | Out-String).Trim() -and -not $InitialDeployment) {
 
 docker compose @ComposeArgs build backend frontend
 if ($LASTEXITCODE -ne 0) { throw "Release image build failed." }
+
+$ExistingBackend = docker compose @ComposeArgs ps -q backend
+if (($ExistingBackend | Out-String).Trim()) {
+    docker compose @ComposeArgs stop frontend backend
+    if ($LASTEXITCODE -ne 0) { throw "Could not stop application services for migration." }
+}
+docker compose @ComposeArgs up -d --wait postgres ollama qdrant redis searxng blackbox
+if ($LASTEXITCODE -ne 0) { throw "Deployment dependencies did not become healthy." }
+docker compose @ComposeArgs run --rm --no-deps backend alembic upgrade head
+if ($LASTEXITCODE -ne 0) { throw "Database migration failed." }
+
 docker compose @ComposeArgs up -d --wait --remove-orphans
 if ($LASTEXITCODE -ne 0) { throw "Deployment did not become healthy." }
 
