@@ -69,6 +69,7 @@ volumes/
 # ------------------------------------------------------------
 backup/
 backups/
+deployment-backups/
 .latest-backup.txt
 *.zip
 *.tar
