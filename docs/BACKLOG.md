@@ -276,7 +276,7 @@ Measure:
 - CPU usage
 - Output consistency
 
-Status: Deferred
+Status: Completed — no migration recommended; prompt anchoring identified
 
 ---
 
@@ -294,7 +294,7 @@ Requirements:
 - Migration documented
 - Rollback supported
 
-Status: Deferred
+Status: Blocked pending prompt-contract correction and capped re-evaluation
 
 ---
 

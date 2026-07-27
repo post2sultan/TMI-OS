@@ -1,0 +1,103 @@
+{
+  "campaign_id": 109,
+  "models": [
+    "qwen2.5:3b",
+    "qwen2.5:7b"
+  ],
+  "runs_per_model": 2,
+  "total_runs": 4,
+  "paid_api_credits": 0,
+  "production_model_changed": false,
+  "runs": [
+    {
+      "model": "qwen2.5:3b",
+      "json_compliant": true,
+      "quality_passed": false,
+      "dimension_complete": true,
+      "evidence_url_accuracy": 1.0,
+      "unsupported_evidence_token_rate": 0.75,
+      "total_score": 50.0,
+      "confidence": 0.5,
+      "duration_seconds": 382.43,
+      "error": "Every dimension has the same score.; Every dimension has identical reasoning.; strategic_clarity reasoning is placeholder text.; strategic_clarity contains placeholder evidence.; creative_strength reasoning is placeholder text.; creative_strength contains placeholder evidence.; brand_fit reasoning is placeholder text.; brand_fit contains placeholder evidence.; customer_value reasoning is placeholder text.; customer_value contains placeholder evidence.; cultural_relevance reasoning is placeholder text.; cultural_relevance contains placeholder evidence.; execution_quality reasoning is placeholder text.; execution_quality contains placeholder evidence.; commercial_potential reasoning is placeholder text.; commercial_potential contains placeholder evidence.; Summary is missing or too short.; Summary contains placeholder text.",
+      "ollama_total_seconds": 382.29,
+      "ollama_eval_tokens": 914,
+      "loaded_size_gb": 2.41,
+      "vram_size_gb": 0.0,
+      "processor": "CPU",
+      "run_number": 1
+    },
+    {
+      "model": "qwen2.5:3b",
+      "json_compliant": true,
+      "quality_passed": false,
+      "dimension_complete": true,
+      "evidence_url_accuracy": 1.0,
+      "unsupported_evidence_token_rate": 0.75,
+      "total_score": 50.0,
+      "confidence": 0.5,
+      "duration_seconds": 174.54,
+      "error": "Every dimension has the same score.; Every dimension has identical reasoning.; strategic_clarity reasoning is placeholder text.; strategic_clarity contains placeholder evidence.; creative_strength reasoning is placeholder text.; creative_strength contains placeholder evidence.; brand_fit reasoning is placeholder text.; brand_fit contains placeholder evidence.; customer_value reasoning is placeholder text.; customer_value contains placeholder evidence.; cultural_relevance reasoning is placeholder text.; cultural_relevance contains placeholder evidence.; execution_quality reasoning is placeholder text.; execution_quality contains placeholder evidence.; commercial_potential reasoning is placeholder text.; commercial_potential contains placeholder evidence.; Summary is missing or too short.; Summary contains placeholder text.",
+      "ollama_total_seconds": 174.51,
+      "ollama_eval_tokens": 915,
+      "loaded_size_gb": 2.41,
+      "vram_size_gb": 0.0,
+      "processor": "CPU",
+      "run_number": 2
+    },
+    {
+      "model": "qwen2.5:7b",
+      "json_compliant": true,
+      "quality_passed": false,
+      "dimension_complete": true,
+      "evidence_url_accuracy": 1.0,
+      "unsupported_evidence_token_rate": 0.7759,
+      "total_score": 50.0,
+      "confidence": 0.5,
+      "duration_seconds": 500.36,
+      "error": "Every dimension has the same score.",
+      "ollama_total_seconds": 500.33,
+      "ollama_eval_tokens": 1150,
+      "loaded_size_gb": 5.46,
+      "vram_size_gb": 0.0,
+      "processor": "CPU",
+      "run_number": 1
+    },
+    {
+      "model": "qwen2.5:7b",
+      "json_compliant": true,
+      "quality_passed": false,
+      "dimension_complete": true,
+      "evidence_url_accuracy": 1.0,
+      "unsupported_evidence_token_rate": 0.6047,
+      "total_score": 50.0,
+      "confidence": 0.5,
+      "duration_seconds": 295.18,
+      "error": "Every dimension has the same score.",
+      "ollama_total_seconds": 295.14,
+      "ollama_eval_tokens": 1288,
+      "loaded_size_gb": 5.46,
+      "vram_size_gb": 0.0,
+      "processor": "CPU",
+      "run_number": 2
+    }
+  ],
+  "summaries": {
+    "qwen2.5:3b": {
+      "runs": 2,
+      "valid_runs": 0,
+      "average_duration_seconds": 278.49,
+      "score_spread": 0.0,
+      "average_evidence_url_accuracy": 1.0,
+      "average_unsupported_evidence_token_rate": 0.75
+    },
+    "qwen2.5:7b": {
+      "runs": 2,
+      "valid_runs": 0,
+      "average_duration_seconds": 397.77,
+      "score_spread": 0.0,
+      "average_evidence_url_accuracy": 1.0,
+      "average_unsupported_evidence_token_rate": 0.6903
+    }
+  }
+}
