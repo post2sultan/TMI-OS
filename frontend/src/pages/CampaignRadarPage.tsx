@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+﻿import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,6 +15,29 @@ import { toast } from "sonner";
 import { ErrorState, LoadingState, NoDataState } from "../components/shared/LiveState";
 import { api } from "../lib/api";
 import { formatDate } from "../lib/format";
+
+function providerStatus(status: string) {
+  const normalized = status.trim().toUpperCase();
+
+  if (normalized === "SUCCESS") {
+    return {
+      label: "Operational",
+      className: "bg-emerald-50 text-emerald-700",
+    };
+  }
+
+  if (normalized === "FAILED") {
+    return {
+      label: "Failed",
+      className: "bg-rose-50 text-rose-700",
+    };
+  }
+
+  return {
+    label: normalized || "Unknown",
+    className: "bg-amber-50 text-amber-700",
+  };
+}
 
 export function CampaignRadarPage() {
   const historyPageSize = 10;
@@ -147,52 +170,55 @@ export function CampaignRadarPage() {
         ) : (
           <>
             <div className="divide-y divide-slate-100">
-              {history.data.items.map((run) => (
-                <article
-                  key={run.id}
-                  className="grid gap-3 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto]"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-950">
-                      {run.query}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-400">
-                      {formatDate(run.created_at)}
-                    </p>
-                  </div>
-                  <div className="text-sm">
-                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                      Provider
-                    </p>
-                    <p className="mt-1 font-semibold text-slate-700">
-                      {run.provider}
-                    </p>
-                  </div>
-                  <div className="text-sm">
-                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                      Results
-                    </p>
-                    <p className="mt-1 font-semibold text-slate-700">
-                      {run.results_found}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 lg:min-w-44 lg:justify-end">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        run.status === "success"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-rose-50 text-rose-700"
-                      }`}
-                    >
-                      {run.status}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                      <Clock3 className="h-3.5 w-3.5" />
-                      {run.duration_ms} ms
-                    </span>
-                  </div>
-                </article>
-              ))}
+              {history.data.items.map((run) => {
+                const status = providerStatus(run.status);
+
+                return (
+                  <article
+                    key={run.id}
+                    className="grid gap-3 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto]"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-950">
+                        {run.query}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        {formatDate(run.created_at)}
+                      </p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        Provider
+                      </p>
+                      <p className="mt-1 font-semibold text-slate-700">
+                        {run.provider}
+                      </p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        Results / cost
+                      </p>
+                      <p className="mt-1 font-semibold text-slate-700">
+                        {run.results_found} results ·{" "}
+                        {run.credits_used === 0
+                          ? "Free"
+                          : `${run.credits_used} credits`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 lg:min-w-48 lg:justify-end">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}
+                      >
+                        {status.label}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                        <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                        {run.duration_ms} ms
+                      </span>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
 
             <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4">
