@@ -294,7 +294,7 @@ Requirements:
 - Migration documented
 - Rollback supported
 
-Status: Blocked pending prompt-contract correction and capped re-evaluation
+Status: Not required — prompt v2 passed 4/4 runs; retain qwen2.5:3b
 
 ---
 
