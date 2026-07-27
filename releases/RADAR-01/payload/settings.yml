@@ -1,0 +1,24 @@
+use_default_settings: true
+
+general:
+  instance_name: "TMI Search"
+  debug: false
+
+search:
+  safe_search: 0
+  autocomplete: "duckduckgo"
+  default_lang: "en"
+  formats:
+    - html
+    - json
+
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  secret_key: "ultrasecretkey"
+  limiter: false
+  image_proxy: true
+
+outgoing:
+  request_timeout: 15.0
+  max_request_timeout: 30.0
