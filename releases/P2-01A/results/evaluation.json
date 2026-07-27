@@ -1,0 +1,103 @@
+{
+  "campaign_id": 109,
+  "models": [
+    "qwen2.5:3b",
+    "qwen2.5:7b"
+  ],
+  "runs_per_model": 2,
+  "total_runs": 4,
+  "paid_api_credits": 0,
+  "production_model_changed": false,
+  "runs": [
+    {
+      "model": "qwen2.5:3b",
+      "json_compliant": true,
+      "quality_passed": true,
+      "dimension_complete": true,
+      "evidence_url_accuracy": 1.0,
+      "unsupported_evidence_token_rate": 0.6129,
+      "total_score": 83.8,
+      "confidence": 0.939,
+      "duration_seconds": 297.09,
+      "error": null,
+      "ollama_total_seconds": 296.95,
+      "ollama_eval_tokens": 1332,
+      "loaded_size_gb": 2.41,
+      "vram_size_gb": 0.0,
+      "processor": "CPU",
+      "run_number": 1
+    },
+    {
+      "model": "qwen2.5:3b",
+      "json_compliant": true,
+      "quality_passed": true,
+      "dimension_complete": true,
+      "evidence_url_accuracy": 1.0,
+      "unsupported_evidence_token_rate": 0.275,
+      "total_score": 81.7,
+      "confidence": 0.93,
+      "duration_seconds": 145.65,
+      "error": null,
+      "ollama_total_seconds": 145.61,
+      "ollama_eval_tokens": 1258,
+      "loaded_size_gb": 2.41,
+      "vram_size_gb": 0.0,
+      "processor": "CPU",
+      "run_number": 2
+    },
+    {
+      "model": "qwen2.5:7b",
+      "json_compliant": true,
+      "quality_passed": true,
+      "dimension_complete": true,
+      "evidence_url_accuracy": 1.0,
+      "unsupported_evidence_token_rate": 0.3607,
+      "total_score": 82.5,
+      "confidence": 0.8905,
+      "duration_seconds": 506.86,
+      "error": null,
+      "ollama_total_seconds": 506.83,
+      "ollama_eval_tokens": 1324,
+      "loaded_size_gb": 5.46,
+      "vram_size_gb": 0.0,
+      "processor": "CPU",
+      "run_number": 1
+    },
+    {
+      "model": "qwen2.5:7b",
+      "json_compliant": true,
+      "quality_passed": true,
+      "dimension_complete": true,
+      "evidence_url_accuracy": 1.0,
+      "unsupported_evidence_token_rate": 0.4857,
+      "total_score": 82.5,
+      "confidence": 0.8905,
+      "duration_seconds": 305.95,
+      "error": null,
+      "ollama_total_seconds": 305.93,
+      "ollama_eval_tokens": 1331,
+      "loaded_size_gb": 5.46,
+      "vram_size_gb": 0.0,
+      "processor": "CPU",
+      "run_number": 2
+    }
+  ],
+  "summaries": {
+    "qwen2.5:3b": {
+      "runs": 2,
+      "valid_runs": 2,
+      "average_duration_seconds": 221.37,
+      "score_spread": 2.1,
+      "average_evidence_url_accuracy": 1.0,
+      "average_unsupported_evidence_token_rate": 0.444
+    },
+    "qwen2.5:7b": {
+      "runs": 2,
+      "valid_runs": 2,
+      "average_duration_seconds": 406.4,
+      "score_spread": 0.0,
+      "average_evidence_url_accuracy": 1.0,
+      "average_unsupported_evidence_token_rate": 0.4232
+    }
+  }
+}
