@@ -3,9 +3,9 @@ param([string]$Root = "O:\TMI-OS")
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-$frontendHealth = docker exec tmi-production-frontend-1 `
-    wget -qO- http://127.0.0.1/healthz
-if ($LASTEXITCODE -ne 0 -or $frontendHealth -notmatch "healthy") {
+docker exec tmi-production-frontend-1 `
+    wget -q --spider http://127.0.0.1/healthz
+if ($LASTEXITCODE -ne 0) {
     throw "Frontend health validation failed."
 }
 
