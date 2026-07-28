@@ -82,3 +82,9 @@ class ContentCreationJob(Base):
     voice_name: Mapped[str] = mapped_column(
         String(50), nullable=False, default="af_heart", server_default="af_heart"
     )
+    social_export_url: Mapped[str] = mapped_column(
+        Text, nullable=False, default="", server_default=""
+    )
+    exported_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )

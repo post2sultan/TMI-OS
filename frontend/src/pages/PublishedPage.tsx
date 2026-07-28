@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Copy, Download, LoaderCircle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import {
   ErrorState,
   LoadingState,
@@ -9,6 +11,7 @@ import { api } from "../lib/api";
 import { formatDate, normalizeScore } from "../lib/format";
 
 export function PublishedPage() {
+  const queryClient = useQueryClient();
   const published = useQuery({
     queryKey: ["reviews", "published"],
     queryFn: () => api.listReviews("published"),
@@ -16,6 +19,20 @@ export function PublishedPage() {
   const jobs = useQuery({
     queryKey: ["content-creation"],
     queryFn: api.listContentCreationJobs,
+  });
+  const exportPackage = useMutation({
+    mutationFn: api.exportSocialPackage,
+    onSuccess: async (response, campaignId) => {
+      await queryClient.invalidateQueries({ queryKey: ["content-creation"] });
+      const exported = response.items.find(
+        (job) => job.campaign_id === campaignId,
+      );
+      if (exported) {
+        window.location.assign(exported.social_export_url);
+      }
+      toast.success("Social publishing package ready.");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 
   if (published.isLoading || jobs.isLoading) {
@@ -58,15 +75,17 @@ export function PublishedPage() {
           {published.data.items.map((item) => {
             const job = jobsByCampaign.get(item.campaign_id);
             return (
-              <Link
+              <article
                 key={item.analysis_id}
-                to={`/campaigns/${item.campaign_id}`}
                 className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-blue-300"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <h2 className="font-semibold text-slate-950">
+                  <Link
+                    to={`/campaigns/${item.campaign_id}`}
+                    className="font-semibold text-slate-950 hover:text-blue-700"
+                  >
                     {item.campaign_title}
-                  </h2>
+                  </Link>
                   <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold uppercase text-blue-800">
                     Published
                   </span>
@@ -79,7 +98,62 @@ export function PublishedPage() {
                   <span>Content log: {job?.status ?? "published"}</span>
                   <span>{formatDate(job?.published_at ?? item.created_at)}</span>
                 </div>
-              </Link>
+                {job?.video_url ? (
+                  <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
+                    <video
+                      controls
+                      preload="metadata"
+                      className="mx-auto max-h-80 rounded-xl bg-slate-950"
+                      src={job.video_url}
+                    />
+                    <p className="text-sm leading-6 text-slate-700">
+                      {job.social_caption}
+                    </p>
+                    <p className="text-sm font-medium text-blue-700">
+                      {job.hashtags.join(" ")}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void navigator.clipboard.writeText(
+                            `${job.social_caption}\n\n${job.hashtags.join(" ")}`,
+                          );
+                          toast.success("Caption copied.");
+                        }}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold"
+                      >
+                        <Copy className="h-4 w-4" />
+                        Copy caption
+                      </button>
+                      {job.social_export_url ? (
+                        <a
+                          href={job.social_export_url}
+                          download
+                          className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2 text-sm font-semibold text-white"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download package
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={exportPackage.isPending}
+                          onClick={() => exportPackage.mutate(item.campaign_id)}
+                          className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                        >
+                          {exportPackage.isPending ? (
+                            <LoaderCircle className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
+                          Create publishing package
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </article>
             );
           })}
         </div>

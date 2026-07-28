@@ -42,6 +42,8 @@ class ContentCreationItem(BaseModel):
     video_url: str
     media_generated_at: datetime | None
     voice_name: str
+    social_export_url: str
+    exported_at: datetime | None
 
 
 class GenerateMediaRequest(BaseModel):

@@ -18,6 +18,7 @@ from app.services.analysis.review_service import ReviewService
 from app.services.campaign_lifecycle import CampaignTransitionError
 from app.services.content_package_service import ContentPackageService
 from app.services.local_video_service import LocalVideoService
+from app.services.social_export_service import SocialExportService
 
 
 router = APIRouter(
@@ -130,6 +131,24 @@ def generate_voice_preview(voice_name: str) -> VoicePreviewResponse:
     return VoicePreviewResponse(
         voice_name=voice_name,
         preview_url=preview_url,
+    )
+
+
+@router.post(
+    "/campaigns/{campaign_id}/social/export",
+    response_model=ContentCreationList,
+)
+def export_social_package(
+    campaign_id: int,
+    database: Session = Depends(get_db),
+) -> ContentCreationList:
+    try:
+        SocialExportService(database).export(campaign_id)
+    except ValueError as error:
+        database.rollback()
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    return ContentCreationList.model_validate(
+        ReviewService(database).get_content_creation_jobs()
     )
 
 

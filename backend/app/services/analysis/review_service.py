@@ -131,6 +131,8 @@ class ReviewService:
                 "video_url": job.video_url,
                 "media_generated_at": job.media_generated_at,
                 "voice_name": job.voice_name,
+                "social_export_url": job.social_export_url,
+                "exported_at": job.exported_at,
             }
             for job, campaign in self.db.execute(statement).all()
         ]
@@ -203,7 +205,11 @@ class ReviewService:
         )
         if job is None:
             return False
-        if not job.video_script.strip() or not job.social_caption.strip():
+        if (
+            not job.video_script.strip()
+            or not job.social_caption.strip()
+            or not job.video_url.strip()
+        ):
             return False
         campaign_lifecycle.transition(campaign, "published")
         job.status = "published"

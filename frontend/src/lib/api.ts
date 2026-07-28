@@ -113,6 +113,12 @@ export const api = {
       method: "POST",
     }),
 
+  exportSocialPackage: (campaignId: number) =>
+    request<ContentCreationListResponse>(
+      `/campaigns/${campaignId}/social/export`,
+      { method: "POST" },
+    ),
+
   getLatestAnalysis: (campaignId: number) =>
     request<AnalysisResponse>(
       `/campaigns/${campaignId}/analysis/latest`,
