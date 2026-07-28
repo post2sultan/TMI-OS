@@ -35,6 +35,20 @@ class AnalysisParser:
         if not isinstance(recommendations, list):
             recommendations = []
 
+        strengths = payload.get(
+            "strengths",
+            [],
+        )
+        if not isinstance(strengths, list):
+            strengths = []
+
+        weaknesses = payload.get(
+            "weaknesses",
+            [],
+        )
+        if not isinstance(weaknesses, list):
+            weaknesses = []
+
         framework_version = str(
             payload.get("framework_version", "")
         ).strip()
@@ -48,6 +62,35 @@ class AnalysisParser:
             )
 
         for dimension in payload.get("dimensions", []):
+
+            dimension_summary = dimension.pop(
+                "summary",
+                None,
+            )
+
+            dimension_strengths = dimension.pop(
+                "strengths",
+                [],
+            )
+            if isinstance(dimension_strengths, list):
+                strengths.extend(
+                    item.strip()
+                    for item in dimension_strengths
+                    if isinstance(item, str)
+                    and item.strip()
+                )
+
+            dimension_weaknesses = dimension.pop(
+                "weaknesses",
+                [],
+            )
+            if isinstance(dimension_weaknesses, list):
+                weaknesses.extend(
+                    item.strip()
+                    for item in dimension_weaknesses
+                    if isinstance(item, str)
+                    and item.strip()
+                )
 
             dimension_recommendations = dimension.pop(
                 "recommendations",
@@ -72,9 +115,13 @@ class AnalysisParser:
                 not str(
                     dimension.get("reasoning", "")
                 ).strip()
-                and str(description or "").strip()
             ):
-                dimension["reasoning"] = description
+                fallback_reasoning = (
+                    str(dimension_summary or "").strip()
+                    or str(description or "").strip()
+                )
+                if fallback_reasoning:
+                    dimension["reasoning"] = fallback_reasoning
 
             if (
                 "dimension" not in dimension
@@ -151,6 +198,12 @@ class AnalysisParser:
 
         payload["recommendations"] = list(
             dict.fromkeys(recommendations)
+        )
+        payload["strengths"] = list(
+            dict.fromkeys(strengths)
+        )
+        payload["weaknesses"] = list(
+            dict.fromkeys(weaknesses)
         )
 
         self._populate_rollup_fields(payload)
