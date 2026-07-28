@@ -7,8 +7,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends espeak-ng ffmpeg fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd --system tmi \
-    && useradd --system --gid tmi --create-home tmi
+    && useradd --system --gid tmi --create-home tmi \
+    && mkdir -p /app/media \
+    && chown tmi:tmi /app/media
 
 COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt

@@ -127,6 +127,9 @@ class ReviewService:
                 "social_caption": job.social_caption,
                 "hashtags": list(job.hashtags),
                 "generated_at": job.generated_at,
+                "audio_url": job.audio_url,
+                "video_url": job.video_url,
+                "media_generated_at": job.media_generated_at,
             }
             for job, campaign in self.db.execute(statement).all()
         ]

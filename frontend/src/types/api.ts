@@ -52,6 +52,9 @@ export interface ContentCreationItem {
   social_caption: string;
   hashtags: string[];
   generated_at: string | null;
+  audio_url: string;
+  video_url: string;
+  media_generated_at: string | null;
 }
 
 export interface ContentCreationListResponse {

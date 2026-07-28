@@ -15,6 +15,7 @@ from app.schemas.review import ContentCreationList
 from app.services.analysis.review_service import ReviewService
 from app.services.campaign_lifecycle import CampaignTransitionError
 from app.services.content_package_service import ContentPackageService
+from app.services.local_video_service import LocalVideoService
 
 
 router = APIRouter(
@@ -91,6 +92,24 @@ def generate_content_package(
                 "content generation."
             ),
         )
+    return ContentCreationList.model_validate(
+        ReviewService(database).get_content_creation_jobs()
+    )
+
+
+@router.post(
+    "/campaigns/{campaign_id}/media/generate",
+    response_model=ContentCreationList,
+)
+def generate_campaign_media(
+    campaign_id: int,
+    database: Session = Depends(get_db),
+) -> ContentCreationList:
+    try:
+        LocalVideoService(database).generate(campaign_id)
+    except ValueError as error:
+        database.rollback()
+        raise HTTPException(status_code=422, detail=str(error)) from error
     return ContentCreationList.model_validate(
         ReviewService(database).get_content_creation_jobs()
     )

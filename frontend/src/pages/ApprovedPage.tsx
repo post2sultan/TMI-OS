@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileText, LoaderCircle, Send } from "lucide-react";
+import { FileText, LoaderCircle, Send, Video } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ErrorState, LoadingState, NoDataState } from "../components/shared/LiveState";
@@ -30,6 +30,14 @@ export function ApprovedPage() {
     mutationFn: api.generateContentPackage,
     onSuccess: async () => {
       toast.success("Script and social copy generated.");
+      await queryClient.invalidateQueries({ queryKey: ["content-creation"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const generateMedia = useMutation({
+    mutationFn: api.generateCampaignMedia,
+    onSuccess: async () => {
+      toast.success("Voiceover and vertical video generated.");
       await queryClient.invalidateQueries({ queryKey: ["content-creation"] });
     },
     onError: (error: Error) => toast.error(error.message),
@@ -107,6 +115,19 @@ export function ApprovedPage() {
                 <div className="flex gap-2">
                   <button
                     type="button"
+                    disabled={!generated || generateMedia.isPending}
+                    onClick={() => generateMedia.mutate(item.campaign_id)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                  >
+                    {generateMedia.isPending ? (
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Video className="h-4 w-4" />
+                    )}
+                    {job?.video_url ? "Regenerate video" : "Generate video"}
+                  </button>
+                  <button
+                    type="button"
                     disabled={generate.isPending}
                     onClick={() => generate.mutate(item.campaign_id)}
                     className="inline-flex items-center gap-2 rounded-xl border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-50"
@@ -150,6 +171,26 @@ export function ApprovedPage() {
                   <p className="font-medium text-blue-700">
                     {job?.hashtags.join(" ")}
                   </p>
+                  {job?.video_url ? (
+                    <div className="space-y-2">
+                      <p className="font-semibold text-slate-950">
+                        Generated vertical video
+                      </p>
+                      <video
+                        controls
+                        preload="metadata"
+                        className="mx-auto max-h-[32rem] rounded-xl bg-slate-950"
+                        src={job.video_url}
+                      />
+                      <a
+                        href={job.video_url}
+                        download
+                        className="inline-flex font-semibold text-emerald-700 hover:underline"
+                      >
+                        Download MP4
+                      </a>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </article>

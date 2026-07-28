@@ -38,6 +38,9 @@ class ContentCreationItem(BaseModel):
     social_caption: str
     hashtags: list[str]
     generated_at: datetime | None
+    audio_url: str
+    video_url: str
+    media_generated_at: datetime | None
 
 
 class ContentCreationList(BaseModel):
