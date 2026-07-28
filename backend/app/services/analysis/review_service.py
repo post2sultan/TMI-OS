@@ -130,6 +130,7 @@ class ReviewService:
                 "audio_url": job.audio_url,
                 "video_url": job.video_url,
                 "media_generated_at": job.media_generated_at,
+                "voice_name": job.voice_name,
             }
             for job, campaign in self.db.execute(statement).all()
         ]

@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
+from functools import lru_cache
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -15,11 +16,20 @@ from app.models.content_creation_job import ContentCreationJob
 class LocalVideoService:
     """Build a local voiceover and launch-ready vertical video."""
 
+    VOICES = {
+        "af_heart", "af_bella", "af_nicole", "am_adam",
+        "am_michael", "bf_emma", "bm_george",
+    }
+    MODEL = "/opt/kokoro/kokoro-v1.0.onnx"
+    VOICE_DATA = "/opt/kokoro/voices-v1.0.bin"
+
     def __init__(self, db: Session, media_root: str = "/app/media") -> None:
         self.db = db
         self.media_root = Path(media_root)
 
-    def generate(self, campaign_id: int) -> ContentCreationJob:
+    def generate(
+        self, campaign_id: int, voice_name: str = "af_heart"
+    ) -> ContentCreationJob:
         job = self.db.scalar(
             select(ContentCreationJob).where(
                 ContentCreationJob.campaign_id == campaign_id
@@ -27,7 +37,8 @@ class LocalVideoService:
         )
         if job is None or not job.video_script.strip():
             raise ValueError("Generate the approved content package first.")
-        if not shutil.which("espeak-ng") or not shutil.which("ffmpeg"):
+        self._validate_voice(voice_name)
+        if not shutil.which("ffmpeg"):
             raise ValueError("Local media tools are unavailable.")
 
         target = self.media_root / f"campaign-{campaign_id}"
@@ -36,15 +47,7 @@ class LocalVideoService:
         video = target / "video.mp4"
         subtitles = target / "captions.srt"
 
-        subprocess.run(
-            [
-                "espeak-ng", "-v", "en", "-s", "145", "-w", str(audio),
-                job.video_script,
-            ],
-            check=True,
-            capture_output=True,
-            timeout=180,
-        )
+        self._synthesize(job.video_script, voice_name, audio)
         duration = self._duration(audio)
         subtitles.write_text(
             self._subtitles(job.video_script, duration), encoding="utf-8"
@@ -81,10 +84,50 @@ class LocalVideoService:
         job.audio_url = f"/api/media/campaign-{campaign_id}/voiceover.wav"
         job.video_url = f"/api/media/campaign-{campaign_id}/video.mp4"
         job.media_generated_at = datetime.now(timezone.utc)
+        job.voice_name = voice_name
         self.db.add(job)
         self.db.commit()
         self.db.refresh(job)
         return job
+
+    @classmethod
+    def preview(
+        cls, voice_name: str, media_root: str = "/app/media"
+    ) -> str:
+        cls._validate_voice(voice_name)
+        target = Path(media_root) / "voice-previews"
+        target.mkdir(parents=True, exist_ok=True)
+        output = target / f"{voice_name}.wav"
+        cls._synthesize(
+            "Welcome to TMI OS. Clear evidence, thoughtful analysis, and "
+            "confident decisions for campaigns that matter.",
+            voice_name,
+            output,
+        )
+        return f"/api/media/voice-previews/{voice_name}.wav"
+
+    @classmethod
+    def _synthesize(cls, text: str, voice_name: str, output: Path) -> None:
+        import soundfile as sf
+
+        samples, sample_rate = cls._engine().create(
+            text, voice=voice_name, speed=1.0, lang="en-us"
+        )
+        sf.write(output, samples, sample_rate)
+        if output.stat().st_size < 1000:
+            raise ValueError("Kokoro produced an invalid audio file.")
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def _engine(cls):
+        from kokoro_onnx import Kokoro
+
+        return Kokoro(cls.MODEL, cls.VOICE_DATA)
+
+    @classmethod
+    def _validate_voice(cls, voice_name: str) -> None:
+        if voice_name not in cls.VOICES:
+            raise ValueError("Unsupported Kokoro voice.")
 
     @staticmethod
     def _duration(audio: Path) -> float:

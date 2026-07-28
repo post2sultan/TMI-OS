@@ -41,6 +41,16 @@ class ContentCreationItem(BaseModel):
     audio_url: str
     video_url: str
     media_generated_at: datetime | None
+    voice_name: str
+
+
+class GenerateMediaRequest(BaseModel):
+    voice_name: str = "af_heart"
+
+
+class VoicePreviewResponse(BaseModel):
+    voice_name: str
+    preview_url: str
 
 
 class ContentCreationList(BaseModel):

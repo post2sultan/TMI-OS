@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileText, LoaderCircle, Send, Video } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -8,6 +9,8 @@ import { formatDate, normalizeScore } from "../lib/format";
 
 export function ApprovedPage() {
   const queryClient = useQueryClient();
+  const [voiceByCampaign, setVoiceByCampaign] = useState<Record<number, string>>({});
+  const [preview, setPreview] = useState({ campaignId: 0, url: "" });
   const reviews = useQuery({
     queryKey: ["reviews", "approved"],
     queryFn: () => api.listReviews("approved"),
@@ -35,11 +38,31 @@ export function ApprovedPage() {
     onError: (error: Error) => toast.error(error.message),
   });
   const generateMedia = useMutation({
-    mutationFn: api.generateCampaignMedia,
+    mutationFn: ({ campaignId, voiceName }: { campaignId: number; voiceName: string }) =>
+      api.generateCampaignMedia(campaignId, voiceName),
     onSuccess: async () => {
       toast.success("Voiceover and vertical video generated.");
       await queryClient.invalidateQueries({ queryKey: ["content-creation"] });
     },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const previewVoice = useMutation({
+    mutationFn: ({
+      campaignId,
+      voiceName,
+    }: {
+      campaignId: number;
+      voiceName: string;
+    }) =>
+      api.generateVoicePreview(voiceName).then((response) => ({
+        campaignId,
+        response,
+      })),
+    onSuccess: ({ campaignId, response }) =>
+      setPreview({
+        campaignId,
+        url: `${response.preview_url}?t=${Date.now()}`,
+      }),
     onError: (error: Error) => toast.error(error.message),
   });
 
@@ -85,6 +108,8 @@ export function ApprovedPage() {
               const generated = Boolean(
                 job?.video_script && job?.social_caption,
               );
+              const selectedVoice =
+                voiceByCampaign[item.campaign_id] || job?.voice_name || "af_heart";
               return (
             <article
               key={item.analysis_id}
@@ -113,10 +138,47 @@ export function ApprovedPage() {
                   Content {job?.status ?? "queued"}
                 </span>
                 <div className="flex gap-2">
+                  <select
+                    aria-label="Narration voice"
+                    value={selectedVoice}
+                    onChange={(event) =>
+                      setVoiceByCampaign((current) => ({
+                        ...current,
+                        [item.campaign_id]: event.target.value,
+                      }))
+                    }
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                  >
+                    <option value="af_heart">Heart — US female (default)</option>
+                    <option value="af_bella">Bella — US female</option>
+                    <option value="af_nicole">Nicole — US female</option>
+                    <option value="am_adam">Adam — US male</option>
+                    <option value="am_michael">Michael — US male</option>
+                    <option value="bf_emma">Emma — British female</option>
+                    <option value="bm_george">George — British male</option>
+                  </select>
+                  <button
+                    type="button"
+                    disabled={previewVoice.isPending}
+                    onClick={() =>
+                      previewVoice.mutate({
+                        campaignId: item.campaign_id,
+                        voiceName: selectedVoice,
+                      })
+                    }
+                    className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
+                  >
+                    Preview
+                  </button>
                   <button
                     type="button"
                     disabled={!generated || generateMedia.isPending}
-                    onClick={() => generateMedia.mutate(item.campaign_id)}
+                    onClick={() =>
+                      generateMedia.mutate({
+                        campaignId: item.campaign_id,
+                        voiceName: selectedVoice,
+                      })
+                    }
                     className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
                   >
                     {generateMedia.isPending ? (
@@ -154,6 +216,14 @@ export function ApprovedPage() {
                   </button>
                 </div>
               </div>
+              {preview.campaignId === item.campaign_id ? (
+                <audio
+                  className="mt-3 w-full"
+                  controls
+                  autoPlay
+                  src={preview.url}
+                />
+              ) : null}
               {generated ? (
                 <div className="mt-4 space-y-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
                   <div>
