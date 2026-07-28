@@ -101,6 +101,12 @@ export const api = {
       { method: "POST" },
     ),
 
+  generateCampaignMedia: (campaignId: number) =>
+    request<ContentCreationListResponse>(
+      `/campaigns/${campaignId}/media/generate`,
+      { method: "POST" },
+    ),
+
   getLatestAnalysis: (campaignId: number) =>
     request<AnalysisResponse>(
       `/campaigns/${campaignId}/analysis/latest`,

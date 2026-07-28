@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import Depends
 from fastapi import Response
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
@@ -60,6 +61,7 @@ app.add_middleware(RequestObservabilityMiddleware)
 app.include_router(extraction_router)
 app.include_router(reviews_router)
 app.include_router(discovery_history_router)
+app.mount("/media", StaticFiles(directory="/app/media", check_dir=False), name="media")
 
 
 class PromptRequest(BaseModel):

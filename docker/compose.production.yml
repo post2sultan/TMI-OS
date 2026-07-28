@@ -151,6 +151,8 @@ services:
     read_only: true
     tmpfs:
       - /tmp:size=64m,mode=1777
+    volumes:
+      - generated_media:/app/media
     cap_drop:
       - ALL
     pids_limit: 256
@@ -262,6 +264,7 @@ networks:
     name: tmi-production-private
 
 volumes:
+  generated_media:
   postgres_data:
   ollama_data:
   qdrant_data:

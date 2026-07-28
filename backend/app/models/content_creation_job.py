@@ -70,3 +70,12 @@ class ContentCreationJob(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+    audio_url: Mapped[str] = mapped_column(
+        Text, nullable=False, default="", server_default=""
+    )
+    video_url: Mapped[str] = mapped_column(
+        Text, nullable=False, default="", server_default=""
+    )
+    media_generated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
