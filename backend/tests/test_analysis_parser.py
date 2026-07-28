@@ -9,6 +9,53 @@ from app.services.scoring.framework import (
 
 class AnalysisParserTests(unittest.TestCase):
 
+    def test_normalizes_known_dimension_level_extras(
+        self,
+    ) -> None:
+        dimensions = []
+
+        for index, dimension in enumerate(
+            ScoringDimensionName,
+            start=1,
+        ):
+            dimensions.append(
+                {
+                    "dimension": dimension.value,
+                    "score": 60 + index,
+                    "confidence": 0.8,
+                    "reasoning": (
+                        f"Campaign-specific reasoning {index} "
+                        "that is sufficiently detailed."
+                    ),
+                    "summary": f"Dimension summary {index}.",
+                    "strengths": [f"Dimension strength {index}."],
+                    "weaknesses": [f"Dimension weakness {index}."],
+                    "evidence": [],
+                }
+            )
+
+        assessment = AnalysisParser().parse(
+            json.dumps(
+                {
+                    "campaign_id": 144,
+                    "framework_version": "1.0",
+                    "dimensions": dimensions,
+                    "summary": "Campaign-specific overall summary.",
+                    "strengths": [],
+                    "weaknesses": [],
+                    "recommendations": ["Improve measurement."],
+                }
+            )
+        )
+
+        self.assertEqual(len(assessment.dimensions), 7)
+        self.assertEqual(len(assessment.strengths), 7)
+        self.assertEqual(len(assessment.weaknesses), 7)
+        self.assertNotIn(
+            "summary",
+            assessment.dimensions[0].model_dump(),
+        )
+
     def test_normalizes_local_model_field_variants(
         self,
     ) -> None:
