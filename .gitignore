@@ -139,3 +139,7 @@ playwright-report/
 # Keep directory placeholders
 # ------------------------------------------------------------
 !.gitkeep
+
+# Windows DPAPI-encrypted social credential vault
+docker/.env.social.vault.json
+docker/.env.social.vault.json.backup
