@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LoaderCircle, Send } from "lucide-react";
+import { FileText, LoaderCircle, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ErrorState, LoadingState, NoDataState } from "../components/shared/LiveState";
@@ -23,6 +23,14 @@ export function ApprovedPage() {
       await queryClient.invalidateQueries({ queryKey: ["reviews"] });
       await queryClient.invalidateQueries({ queryKey: ["content-creation"] });
       await queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const generate = useMutation({
+    mutationFn: api.generateContentPackage,
+    onSuccess: async () => {
+      toast.success("Script and social copy generated.");
+      await queryClient.invalidateQueries({ queryKey: ["content-creation"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -64,6 +72,12 @@ export function ApprovedPage() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {approved.map((item) => (
+            (() => {
+              const job = jobByCampaign.get(item.campaign_id);
+              const generated = Boolean(
+                job?.video_script && job?.social_caption,
+              );
+              return (
             <article
               key={item.analysis_id}
               className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-emerald-300"
@@ -88,23 +102,59 @@ export function ApprovedPage() {
               </div>
               <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
                 <span className="text-xs font-semibold uppercase text-blue-700">
-                  Content {jobByCampaign.get(item.campaign_id)?.status ?? "queued"}
+                  Content {job?.status ?? "queued"}
                 </span>
-                <button
-                  type="button"
-                  disabled={publish.isPending}
-                  onClick={() => publish.mutate(item.campaign_id)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
-                >
-                  {publish.isPending ? (
-                    <LoaderCircle className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                  Publish
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={generate.isPending}
+                    onClick={() => generate.mutate(item.campaign_id)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-50"
+                  >
+                    {generate.isPending ? (
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileText className="h-4 w-4" />
+                    )}
+                    {generated ? "Regenerate" : "Generate content"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!generated || publish.isPending}
+                    onClick={() => publish.mutate(item.campaign_id)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+                  >
+                    {publish.isPending ? (
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    Publish
+                  </button>
+                </div>
               </div>
+              {generated ? (
+                <div className="mt-4 space-y-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
+                  <div>
+                    <p className="font-semibold text-slate-950">Video script</p>
+                    <p className="mt-1 whitespace-pre-wrap leading-6">
+                      {job?.video_script}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-950">Social caption</p>
+                    <p className="mt-1 whitespace-pre-wrap leading-6">
+                      {job?.social_caption}
+                    </p>
+                  </div>
+                  <p className="font-medium text-blue-700">
+                    {job?.hashtags.join(" ")}
+                  </p>
+                </div>
+              ) : null}
             </article>
+              );
+            })()
           ))}
         </div>
       )}

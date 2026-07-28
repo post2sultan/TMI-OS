@@ -34,6 +34,10 @@ class ContentCreationItem(BaseModel):
     status: str
     created_at: datetime
     published_at: datetime | None
+    video_script: str
+    social_caption: str
+    hashtags: list[str]
+    generated_at: datetime | None
 
 
 class ContentCreationList(BaseModel):

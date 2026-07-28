@@ -48,6 +48,10 @@ export interface ContentCreationItem {
   status: string;
   created_at: string;
   published_at: string | null;
+  video_script: string;
+  social_caption: string;
+  hashtags: string[];
+  generated_at: string | null;
 }
 
 export interface ContentCreationListResponse {

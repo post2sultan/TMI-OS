@@ -123,6 +123,10 @@ class ReviewService:
                 "status": job.status,
                 "created_at": job.created_at,
                 "published_at": job.published_at,
+                "video_script": job.video_script,
+                "social_caption": job.social_caption,
+                "hashtags": list(job.hashtags),
+                "generated_at": job.generated_at,
             }
             for job, campaign in self.db.execute(statement).all()
         ]
@@ -188,18 +192,16 @@ class ReviewService:
         if analysis.review_status != "approved":
             return False
 
-        campaign_lifecycle.transition(campaign, "published")
         job = self.db.scalar(
             select(ContentCreationJob).where(
                 ContentCreationJob.analysis_id == analysis.id
             )
         )
         if job is None:
-            job = ContentCreationJob(
-                campaign_id=campaign.id,
-                analysis_id=analysis.id,
-            )
-            self.db.add(job)
+            return False
+        if not job.video_script.strip() or not job.social_caption.strip():
+            return False
+        campaign_lifecycle.transition(campaign, "published")
         job.status = "published"
         job.published_at = datetime.now(timezone.utc)
         self.db.commit()
