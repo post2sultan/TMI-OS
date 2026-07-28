@@ -19,10 +19,11 @@ $BackendBackup = "tmi-os-backend:pre-gl-09-$Stamp"
 $FrontendBackup = "tmi-os-frontend:pre-gl-09-$Stamp"
 
 New-Item -ItemType Directory -Force -Path $CleanRoot, $BackupDir | Out-Null
+$Archive = Join-Path $CleanRoot "source.zip"
 git -C $Root archive --format=zip `
-    --output=(Join-Path $CleanRoot "source.zip") HEAD backend frontend
+    "--output=$Archive" HEAD backend frontend
 if ($LASTEXITCODE -ne 0) { throw "Clean source archive failed." }
-Expand-Archive -LiteralPath (Join-Path $CleanRoot "source.zip") `
+Expand-Archive -LiteralPath $Archive `
     -DestinationPath $CleanRoot
 
 docker image tag $BackendImage $BackendBackup
