@@ -95,6 +95,12 @@ export const api = {
   listContentCreationJobs: () =>
     request<ContentCreationListResponse>("/content-creation"),
 
+  generateContentPackage: (campaignId: number) =>
+    request<ContentCreationListResponse>(
+      `/campaigns/${campaignId}/content/generate`,
+      { method: "POST" },
+    ),
+
   getLatestAnalysis: (campaignId: number) =>
     request<AnalysisResponse>(
       `/campaigns/${campaignId}/analysis/latest`,

@@ -14,6 +14,7 @@ from app.schemas.review import ReviewList
 from app.schemas.review import ContentCreationList
 from app.services.analysis.review_service import ReviewService
 from app.services.campaign_lifecycle import CampaignTransitionError
+from app.services.content_package_service import ContentPackageService
 
 
 router = APIRouter(
@@ -70,6 +71,32 @@ def get_content_creation_jobs(
 
 
 @router.post(
+    "/campaigns/{campaign_id}/content/generate",
+    response_model=ContentCreationList,
+)
+def generate_content_package(
+    campaign_id: int,
+    database: Session = Depends(get_db),
+) -> ContentCreationList:
+    try:
+        job = ContentPackageService(database).generate(campaign_id)
+    except ValueError as error:
+        database.rollback()
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    if job is None:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Campaign must be approved or published before "
+                "content generation."
+            ),
+        )
+    return ContentCreationList.model_validate(
+        ReviewService(database).get_content_creation_jobs()
+    )
+
+
+@router.post(
     "/campaigns/{campaign_id}/approve",
 )
 def approve_campaign(
@@ -111,7 +138,10 @@ def publish_campaign(
     if not success:
         raise HTTPException(
             status_code=409,
-            detail="Campaign must have an approved analysis before publishing.",
+            detail=(
+                "Campaign must be approved and have generated content "
+                "before publishing."
+            ),
         )
     return {"status": "published"}
 

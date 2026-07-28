@@ -39,7 +39,12 @@ class CampaignReviewServiceTests(unittest.TestCase):
         database = Mock()
         campaign = SimpleNamespace(id=7, status="approved")
         analysis = SimpleNamespace(id=10, review_status="approved")
-        job = SimpleNamespace(status="queued", published_at=None)
+        job = SimpleNamespace(
+            status="generated",
+            published_at=None,
+            video_script="Complete video script",
+            social_caption="Complete social caption",
+        )
         database.scalar.return_value = job
         service = ReviewService(database)
         service._get_campaign = Mock(return_value=campaign)
