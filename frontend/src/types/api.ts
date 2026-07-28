@@ -40,20 +40,39 @@ export interface ReviewListResponse {
   total: number;
 }
 
+export interface AnalysisDimension {
+  name: string;
+  score: number;
+  weight?: number;
+  summary?: string;
+  evidence?: string[];
+}
+
 export interface AnalysisResponse {
   id: number;
   campaign_id: number;
+
   total_score: number;
   confidence: number;
+
   framework_name: string;
   framework_version: string;
   constitution_version: string;
   model_name: string;
+
   summary: string;
+
   strengths: unknown[];
   weaknesses: unknown[];
   recommendations: unknown[];
-  dimensions: unknown[];
+
+  dimensions: AnalysisDimension[];
+
+  review_status?: string;
+  approved_by?: string;
+  rejected_by?: string;
+  rejection_reason?: string;
+
   created_at: string;
 }
 

@@ -1,15 +1,31 @@
+﻿import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Check,
   ExternalLink,
   LoaderCircle,
   Play,
+  RefreshCw,
+  X,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ErrorState, LoadingState, NoDataState } from "../components/shared/LiveState";
+import { DimensionCard } from "../components/review/DimensionCard";
+import {
+  ErrorState,
+  LoadingState,
+  NoDataState,
+} from "../components/shared/LiveState";
 import { api, ApiError } from "../lib/api";
-import { asText, formatDate, formatPercent, normalizeScore } from "../lib/format";
+import {
+  asText,
+  formatDate,
+  formatPercent,
+  normalizeScore,
+} from "../lib/format";
+
+const REVIEWER = "Sultan Salahuddin";
 
 function AnalysisList({
   title,
@@ -39,40 +55,89 @@ function AnalysisList({
   );
 }
 
+function reviewBadgeClass(status?: string) {
+  switch (status?.toLowerCase()) {
+    case "approved":
+      return "bg-emerald-100 text-emerald-800";
+    case "rejected":
+      return "bg-red-100 text-red-800";
+    default:
+      return "bg-amber-100 text-amber-800";
+  }
+}
+
 export function CampaignDetailPage() {
-  const params = useParams();
-  const campaignId = Number(params.campaignId);
+  const { campaignId: campaignIdParam } = useParams();
+  const campaignId = Number(campaignIdParam);
+  const isValidCampaignId = Number.isInteger(campaignId) && campaignId > 0;
   const queryClient = useQueryClient();
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [showRejectForm, setShowRejectForm] = useState(false);
 
   const campaign = useQuery({
     queryKey: ["campaign", campaignId],
     queryFn: () => api.getCampaign(campaignId),
-    enabled: Number.isInteger(campaignId) && campaignId > 0,
+    enabled: isValidCampaignId,
   });
 
   const analysis = useQuery({
     queryKey: ["analysis", campaignId],
     queryFn: () => api.getLatestAnalysis(campaignId),
-    enabled: Number.isInteger(campaignId) && campaignId > 0,
-    retry: (failureCount, error) => {
-      if (error instanceof ApiError && error.status === 404) return false;
-      return failureCount < 1;
-    },
+    enabled: isValidCampaignId,
+    retry: (failureCount, error) =>
+      !(error instanceof ApiError && error.status === 404) &&
+      failureCount < 1,
   });
+
+  async function refreshCampaignData() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["campaign", campaignId] }),
+      queryClient.invalidateQueries({ queryKey: ["analysis", campaignId] }),
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] }),
+      queryClient.invalidateQueries({ queryKey: ["reviews"] }),
+    ]);
+  }
 
   const analyze = useMutation({
     mutationFn: () => api.analyzeCampaign(campaignId, false),
     onSuccess: async () => {
       toast.success("Campaign analysis completed.");
-      await queryClient.invalidateQueries({
-        queryKey: ["analysis", campaignId],
-      });
-      await queryClient.invalidateQueries({ queryKey: ["reviews"] });
+      await refreshCampaignData();
     },
     onError: (error: Error) => toast.error(error.message),
   });
 
-  if (!Number.isInteger(campaignId) || campaignId < 1) {
+  const approve = useMutation({
+    mutationFn: () => api.approveCampaign(campaignId, REVIEWER),
+    onSuccess: async () => {
+      toast.success("Campaign approved.");
+      await refreshCampaignData();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const reject = useMutation({
+    mutationFn: (reason: string) =>
+      api.rejectCampaign(campaignId, REVIEWER, reason),
+    onSuccess: async () => {
+      setRejectionReason("");
+      setShowRejectForm(false);
+      toast.success("Campaign rejected.");
+      await refreshCampaignData();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const reanalyze = useMutation({
+    mutationFn: () => api.reanalyzeCampaign(campaignId),
+    onSuccess: async () => {
+      toast.success("Campaign reanalysis completed.");
+      await refreshCampaignData();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  if (!isValidCampaignId) {
     return <ErrorState message="Invalid campaign ID." />;
   }
 
@@ -92,6 +157,8 @@ export function CampaignDetailPage() {
   const record = campaign.data;
   const noAnalysis =
     analysis.error instanceof ApiError && analysis.error.status === 404;
+  const isGovernancePending =
+    approve.isPending || reject.isPending || reanalyze.isPending;
 
   return (
     <div className="space-y-7">
@@ -99,7 +166,7 @@ export function CampaignDetailPage() {
         to="/campaign-radar"
         className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-900"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Campaign Radar
       </Link>
 
@@ -127,11 +194,11 @@ export function CampaignDetailPage() {
           <a
             href={record.url}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             Open source
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
           </a>
         </div>
       </header>
@@ -148,12 +215,12 @@ export function CampaignDetailPage() {
             type="button"
             onClick={() => analyze.mutate()}
             disabled={analyze.isPending}
-            className="mx-auto mt-5 flex items-center gap-2 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-60"
+            className="mx-auto mt-5 flex items-center gap-2 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {analyze.isPending ? (
-              <LoaderCircle className="h-4 w-4 animate-spin" />
+              <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : (
-              <Play className="h-4 w-4" />
+              <Play className="h-4 w-4" aria-hidden="true" />
             )}
             Analyze campaign
           </button>
@@ -196,27 +263,121 @@ export function CampaignDetailPage() {
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
               <div>
-                <h2 className="font-semibold text-slate-950">Executive summary</h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-semibold text-slate-950">
+                    Executive summary
+                  </h2>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${reviewBadgeClass(
+                      analysis.data.review_status,
+                    )}`}
+                  >
+                    {analysis.data.review_status || "Pending"}
+                  </span>
+                </div>
                 <p className="mt-3 max-w-5xl text-sm leading-7 text-slate-600">
                   {analysis.data.summary}
                 </p>
+                {analysis.data.rejection_reason ? (
+                  <p className="mt-3 text-sm font-medium text-red-700">
+                    Rejection reason: {analysis.data.rejection_reason}
+                  </p>
+                ) : null}
               </div>
-              <button
-                type="button"
-                onClick={() => analyze.mutate()}
-                disabled={analyze.isPending}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-              >
-                {analyze.isPending ? (
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Play className="h-4 w-4" />
-                )}
-                Run analysis
-              </button>
+
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => approve.mutate()}
+                  disabled={isGovernancePending}
+                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {approve.isPending ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                  Approve
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRejectForm((visible) => !visible)}
+                  disabled={isGovernancePending}
+                  className="inline-flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <X className="h-4 w-4" />
+                  Reject
+                </button>
+                <button
+                  type="button"
+                  onClick={() => reanalyze.mutate()}
+                  disabled={isGovernancePending}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {reanalyze.isPending ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                  Reanalyze
+                </button>
+              </div>
             </div>
+
+            {showRejectForm ? (
+              <form
+                className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const reason = rejectionReason.trim();
+                  if (reason) reject.mutate(reason);
+                }}
+              >
+                <label
+                  htmlFor="rejection-reason"
+                  className="text-sm font-semibold text-red-900"
+                >
+                  Reason for rejection
+                </label>
+                <textarea
+                  id="rejection-reason"
+                  value={rejectionReason}
+                  onChange={(event) => setRejectionReason(event.target.value)}
+                  rows={3}
+                  required
+                  disabled={reject.isPending}
+                  className="mt-2 w-full rounded-xl border border-red-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                  placeholder="Explain why this campaign should be rejected."
+                />
+                <div className="mt-3 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowRejectForm(false);
+                      setRejectionReason("");
+                    }}
+                    disabled={reject.isPending}
+                    className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!rejectionReason.trim() || reject.isPending}
+                    className="inline-flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {reject.isPending ? (
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <X className="h-4 w-4" />
+                    )}
+                    Confirm rejection
+                  </button>
+                </div>
+              </form>
+            ) : null}
           </section>
 
           <div className="grid gap-4 xl:grid-cols-3">
@@ -228,7 +389,26 @@ export function CampaignDetailPage() {
             />
           </div>
 
-          <AnalysisList title="Dimensions" items={analysis.data.dimensions} />
+          <section>
+            <h2 className="mb-4 text-xl font-bold text-slate-950">
+              Analysis dimensions
+            </h2>
+            {analysis.data.dimensions.length === 0 ? (
+              <NoDataState
+                title="No dimensions returned"
+                description="This analysis does not contain dimension-level scores."
+              />
+            ) : (
+              <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                {analysis.data.dimensions.map((dimension, index) => (
+                  <DimensionCard
+                    key={`${dimension.name}-${index}`}
+                    {...dimension}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
         </>
       )}
 
