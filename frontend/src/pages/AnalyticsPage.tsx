@@ -11,8 +11,8 @@ export function AnalyticsPage() {
     queryFn: () => api.listCampaigns(),
   });
   const reviews = useQuery({
-    queryKey: ["reviews"],
-    queryFn: api.listReviews,
+    queryKey: ["reviews", "pending"],
+    queryFn: () => api.listReviews("pending"),
   });
 
   if (

@@ -11,6 +11,7 @@ from app.schemas.review import AnalysisEditRequest
 from app.schemas.review import EvidenceList
 from app.schemas.review import RejectRequest
 from app.schemas.review import ReviewList
+from app.schemas.review import ContentCreationList
 from app.services.analysis.review_service import ReviewService
 from app.services.campaign_lifecycle import CampaignTransitionError
 
@@ -35,12 +36,36 @@ def get_db() -> Generator[Session, None, None]:
     response_model=ReviewList,
 )
 def get_reviews(
+    status: str = "pending",
     database: Session = Depends(get_db),
 ) -> ReviewList:
+    normalized_status = status.strip().lower()
+    if normalized_status not in {
+        "pending",
+        "approved",
+        "rejected",
+        "published",
+    }:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Review status must be pending, approved, rejected "
+                "or published."
+            ),
+        )
     service = ReviewService(database)
 
     return ReviewList.model_validate(
-        service.get_pending_reviews()
+        service.get_reviews(normalized_status)
+    )
+
+
+@router.get("/content-creation", response_model=ContentCreationList)
+def get_content_creation_jobs(
+    database: Session = Depends(get_db),
+) -> ContentCreationList:
+    return ContentCreationList.model_validate(
+        ReviewService(database).get_content_creation_jobs()
     )
 
 
@@ -71,6 +96,24 @@ def approve_campaign(
     return {
         "status": "approved",
     }
+
+
+@router.post("/campaigns/{campaign_id}/publish")
+def publish_campaign(
+    campaign_id: int,
+    database: Session = Depends(get_db),
+) -> dict[str, str]:
+    try:
+        success = ReviewService(database).publish_campaign(campaign_id)
+    except CampaignTransitionError as error:
+        database.rollback()
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    if not success:
+        raise HTTPException(
+            status_code=409,
+            detail="Campaign must have an approved analysis before publishing.",
+        )
+    return {"status": "published"}
 
 
 @router.post(

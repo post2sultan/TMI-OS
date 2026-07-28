@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.models.analysis import Analysis
 from app.models.campaign import Campaign
 from app.models.campaign_document import CampaignDocument
+from app.models.content_creation_job import ContentCreationJob
 from app.services.campaign_lifecycle import campaign_lifecycle
 
 
@@ -21,7 +22,14 @@ class ReviewService:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def get_pending_reviews(self) -> dict[str, Any]:
+    def get_reviews(self, review_status: str) -> dict[str, Any]:
+        campaign_status = {
+            "pending": "needs_review",
+            "published": "published",
+        }.get(review_status, review_status)
+        analysis_status = (
+            "approved" if review_status == "published" else review_status
+        )
         latest_analysis_subquery = (
             select(
                 Analysis.campaign_id,
@@ -48,7 +56,8 @@ class ReviewService:
                 Campaign.id == Analysis.campaign_id,
             )
             .where(
-                Analysis.review_status == "pending"
+                Analysis.review_status == analysis_status,
+                Campaign.status == campaign_status,
             )
             .order_by(
                 Analysis.created_at.desc(),
@@ -96,6 +105,29 @@ class ReviewService:
             "total": len(items),
         }
 
+    def get_content_creation_jobs(self) -> dict[str, Any]:
+        statement = (
+            select(ContentCreationJob, Campaign)
+            .join(Campaign, Campaign.id == ContentCreationJob.campaign_id)
+            .order_by(
+                ContentCreationJob.created_at.desc(),
+                ContentCreationJob.id.desc(),
+            )
+        )
+        items = [
+            {
+                "id": job.id,
+                "campaign_id": job.campaign_id,
+                "campaign_title": self._campaign_title(campaign),
+                "analysis_id": job.analysis_id,
+                "status": job.status,
+                "created_at": job.created_at,
+                "published_at": job.published_at,
+            }
+            for job, campaign in self.db.execute(statement).all()
+        ]
+        return {"items": items, "total": len(items)}
+
     def approve_analysis(
         self,
         campaign_id: int,
@@ -128,11 +160,51 @@ class ReviewService:
             campaign,
             "approved",
         )
+        existing_job = self.db.scalar(
+            select(ContentCreationJob).where(
+                ContentCreationJob.analysis_id == analysis.id
+            )
+        )
+        if existing_job is None:
+            self.db.add(
+                ContentCreationJob(
+                    campaign_id=campaign.id,
+                    analysis_id=analysis.id,
+                    status="queued",
+                )
+            )
 
         self.db.commit()
         self.db.refresh(analysis)
         self.db.refresh(campaign)
 
+        return True
+
+    def publish_campaign(self, campaign_id: int) -> bool:
+        campaign = self._get_campaign(campaign_id)
+        analysis = self._get_latest_analysis(campaign_id)
+        if campaign is None or analysis is None:
+            return False
+        if analysis.review_status != "approved":
+            return False
+
+        campaign_lifecycle.transition(campaign, "published")
+        job = self.db.scalar(
+            select(ContentCreationJob).where(
+                ContentCreationJob.analysis_id == analysis.id
+            )
+        )
+        if job is None:
+            job = ContentCreationJob(
+                campaign_id=campaign.id,
+                analysis_id=analysis.id,
+            )
+            self.db.add(job)
+        job.status = "published"
+        job.published_at = datetime.now(timezone.utc)
+        self.db.commit()
+        self.db.refresh(campaign)
+        self.db.refresh(job)
         return True
 
     def reject_analysis(

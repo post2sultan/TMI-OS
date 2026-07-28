@@ -17,8 +17,12 @@ export function DashboardPage() {
     queryFn: () => api.listCampaigns(),
   });
   const reviews = useQuery({
-    queryKey: ["reviews"],
-    queryFn: api.listReviews,
+    queryKey: ["reviews", "pending"],
+    queryFn: () => api.listReviews("pending"),
+  });
+  const approvedReviews = useQuery({
+    queryKey: ["reviews", "approved"],
+    queryFn: () => api.listReviews("approved"),
   });
   const health = useQuery({
     queryKey: ["health"],
@@ -26,17 +30,18 @@ export function DashboardPage() {
     refetchInterval: 30000,
   });
 
-  if (campaigns.isLoading || reviews.isLoading) {
+  if (campaigns.isLoading || reviews.isLoading || approvedReviews.isLoading) {
     return <LoadingState label="Loading TMI command centre..." />;
   }
 
-  if (campaigns.isError || reviews.isError) {
+  if (campaigns.isError || reviews.isError || approvedReviews.isError) {
     return (
       <ErrorState
         message="The dashboard could not reach the live backend."
         onRetry={() => {
           void campaigns.refetch();
           void reviews.refetch();
+          void approvedReviews.refetch();
         }}
       />
     );
@@ -44,11 +49,7 @@ export function DashboardPage() {
 
   const campaignItems = campaigns.data?.items ?? [];
   const reviewItems = reviews.data?.items ?? [];
-  const approved = reviewItems.filter((item) =>
-    `${item.review_status} ${item.campaign_status ?? ""}`
-      .toLowerCase()
-      .includes("approv"),
-  ).length;
+  const approved = approvedReviews.data?.total ?? 0;
   const pending = reviewItems.filter((item) =>
     `${item.review_status}`.toLowerCase().includes("pending"),
   ).length;

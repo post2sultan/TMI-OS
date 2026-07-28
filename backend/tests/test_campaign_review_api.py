@@ -3,10 +3,54 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 from app.models.analysis import Analysis
+from app.models.content_creation_job import ContentCreationJob
 from app.services.analysis.review_service import ReviewService
 
 
 class CampaignReviewServiceTests(unittest.TestCase):
+
+    def test_approval_queues_content_creation(self) -> None:
+        database = Mock()
+        database.scalar.return_value = None
+        campaign = SimpleNamespace(id=7, status="needs_review")
+        analysis = SimpleNamespace(
+            id=10,
+            review_status="pending",
+            reviewed_by=None,
+            review_reason=None,
+            reviewed_at=None,
+        )
+        service = ReviewService(database)
+        service._get_campaign = Mock(return_value=campaign)
+        service._get_latest_analysis = Mock(return_value=analysis)
+
+        self.assertTrue(service.approve_analysis(7, "Sultan"))
+
+        self.assertEqual(campaign.status, "approved")
+        self.assertEqual(analysis.review_status, "approved")
+        queued = database.add.call_args.args[0]
+        self.assertIsInstance(queued, ContentCreationJob)
+        self.assertEqual(queued.campaign_id, 7)
+        self.assertEqual(queued.analysis_id, 10)
+        self.assertEqual(queued.status, "queued")
+        database.commit.assert_called_once()
+
+    def test_publish_moves_approved_campaign_and_content_job(self) -> None:
+        database = Mock()
+        campaign = SimpleNamespace(id=7, status="approved")
+        analysis = SimpleNamespace(id=10, review_status="approved")
+        job = SimpleNamespace(status="queued", published_at=None)
+        database.scalar.return_value = job
+        service = ReviewService(database)
+        service._get_campaign = Mock(return_value=campaign)
+        service._get_latest_analysis = Mock(return_value=analysis)
+
+        self.assertTrue(service.publish_campaign(7))
+
+        self.assertEqual(campaign.status, "published")
+        self.assertEqual(job.status, "published")
+        self.assertIsNotNone(job.published_at)
+        database.commit.assert_called_once()
 
     def test_edit_creates_new_analysis_without_overwriting_original(self) -> None:
         database = Mock()
