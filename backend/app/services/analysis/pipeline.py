@@ -504,17 +504,6 @@ class AnalysisPipeline:
             source_vector = self.ai_client.embed(
                 prompt.content
             )
-            if not force:
-            	duplicate_analysis = (
-                	self._find_semantic_duplicate(
-                    		session=session,
-                   	 	campaign=campaign,
-                    		source_vector=source_vector,
-                	)
-            	)
-
-            	if duplicate_analysis is not None:
-                	return duplicate_analysis
 
             assessment = self._generate_validated_assessment(
                 campaign=campaign,
