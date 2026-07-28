@@ -26,6 +26,21 @@ class ReviewList(BaseModel):
     total: int
 
 
+class ContentCreationItem(BaseModel):
+    id: int
+    campaign_id: int
+    campaign_title: str
+    analysis_id: int
+    status: str
+    created_at: datetime
+    published_at: datetime | None
+
+
+class ContentCreationList(BaseModel):
+    items: list[ContentCreationItem]
+    total: int
+
+
 class ApproveRequest(BaseModel):
     approved_by: str
 

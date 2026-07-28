@@ -15,6 +15,7 @@ import app.models.discovery_run
 import app.models.analysis_run
 import app.models.provider
 import app.models.audit_event
+import app.models.content_creation_job
 
 print("========== MODELS ==========")
 print(Base.metadata.tables.keys())

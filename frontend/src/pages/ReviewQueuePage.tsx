@@ -19,8 +19,8 @@ export function ReviewQueuePage() {
   const [busyId, setBusyId] = useState<number | null>(null);
 
   const reviews = useQuery({
-    queryKey: ["reviews"],
-    queryFn: api.listReviews,
+    queryKey: ["reviews", "pending"],
+    queryFn: () => api.listReviews("pending"),
   });
 
   async function refresh() {

@@ -13,6 +13,7 @@ from app.models.evidence import Evidence
 from app.models.discovery_run import DiscoveryRun
 from app.models.provider import Provider
 from app.models.audit_event import AuditEvent
+from app.models.content_creation_job import ContentCreationJob
 
 __all__ = [
     "Campaign",
@@ -23,4 +24,5 @@ __all__ = [
     "DiscoveryRun",
     "Provider",
     "AuditEvent",
+    "ContentCreationJob",
 ]

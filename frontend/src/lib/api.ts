@@ -4,6 +4,7 @@ import type {
   Campaign,
   CampaignCreateRequest,
   CampaignListResponse,
+  ContentCreationListResponse,
   DiscoveryHistoryResponse,
   DiscoverySaveResponse,
   ReviewListResponse,
@@ -87,7 +88,12 @@ export const api = {
       `/discovery/history?limit=${limit}&offset=${offset}`,
     ),
 
-  listReviews: () => request<ReviewListResponse>("/reviews"),
+  listReviews: (
+    status: "pending" | "approved" | "rejected" | "published" = "pending",
+  ) => request<ReviewListResponse>(`/reviews?status=${status}`),
+
+  listContentCreationJobs: () =>
+    request<ContentCreationListResponse>("/content-creation"),
 
   getLatestAnalysis: (campaignId: number) =>
     request<AnalysisResponse>(
@@ -120,7 +126,12 @@ export const api = {
     }),
 
   reanalyzeCampaign: (campaignId: number) =>
-    request<ActionResponse>(`/campaigns/${campaignId}/reanalyze`, {
+    request<AnalysisResponse>(`/campaigns/${campaignId}/analyze?force=true`, {
+      method: "POST",
+    }),
+
+  publishCampaign: (campaignId: number) =>
+    request<ActionResponse>(`/campaigns/${campaignId}/publish`, {
       method: "POST",
     }),
 };

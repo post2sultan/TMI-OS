@@ -40,6 +40,21 @@ export interface ReviewListResponse {
   total: number;
 }
 
+export interface ContentCreationItem {
+  id: number;
+  campaign_id: number;
+  campaign_title: string;
+  analysis_id: number;
+  status: string;
+  created_at: string;
+  published_at: string | null;
+}
+
+export interface ContentCreationListResponse {
+  items: ContentCreationItem[];
+  total: number;
+}
+
 export interface AnalysisDimension {
   name: string;
   score: number;
