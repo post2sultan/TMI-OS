@@ -37,7 +37,7 @@ class ContentPackageServiceTests(unittest.TestCase):
         ai_client = Mock()
         ai_client.generate.return_value = """
         {
-          "video_script": "This approved campaign shows how a clear proposition can earn attention. Its focused audience and strong execution create a useful example for marketers. The Mi'yar Index score highlights the campaign's strongest choices while identifying one practical next step: add a measurable call to action. That improvement would connect creative attention to observable business impact and make the campaign easier to evaluate over time.",
+          "video_script": "This approved campaign shows how a clear proposition can earn attention. Its focused audience and strong execution create a useful example for marketers. The Mi'yar Index score highlights the campaign's strongest choices while identifying one practical next step: add a measurable call to action. That improvement would connect creative attention to observable business impact and make the campaign easier to evaluate over time. The lesson is straightforward. Strong creative work needs a defined audience, a credible message, and an action that teams can measure. Together, those elements turn a memorable campaign into a repeatable marketing system.",
           "social_caption": "A clear proposition earns attention, but measurable action turns attention into impact. This campaign scores strongly and offers one practical lesson for marketers.",
           "hashtags": ["TMIOS", "#Marketing", "CampaignAnalysis"]
         }
@@ -94,9 +94,11 @@ class ContentPackageServiceTests(unittest.TestCase):
         ai_client = Mock()
         ai_client.generate.return_value = (
             '{"video_script":"'
-            + ("A factual campaign sentence. " * 8)
+            + ("A factual campaign sentence. " * 22)
             + '","social_caption":"A factual published campaign caption '
-            'with a clear marketing lesson.","hashtags":'
+            "with a clear marketing lesson for teams seeking stronger "
+            "audience relevance, measurable action, credible evidence, "
+            'and repeatable commercial impact.","hashtags":'
             '["TMIOS","Marketing","Campaign"]}'
         )
 

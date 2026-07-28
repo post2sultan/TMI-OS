@@ -85,14 +85,34 @@ class ContentPackageService:
                 f"Recommendations: {'; '.join(map(str, analysis.recommendations))}",
             ]
         )
-        payload = self._extract_payload(
-            self.ai_client.generate(prompt, require_json=False)
-        )
-        script = str(payload.get("video_script", "")).strip()
-        caption = str(payload.get("social_caption", "")).strip()
-        hashtags = self._clean_hashtags(payload.get("hashtags"))
-        if len(script) < 80 or len(caption) < 20 or len(hashtags) < 3:
-            raise ValueError("Generated content package is incomplete.")
+        script = ""
+        caption = ""
+        hashtags: list[str] = []
+        for attempt in range(2):
+            active_prompt = prompt
+            if attempt:
+                active_prompt += (
+                    "\nCORRECTION REQUIRED: the video_script must contain "
+                    "80-160 words. Return the complete corrected JSON only."
+                )
+            payload = self._extract_payload(
+                self.ai_client.generate(active_prompt, require_json=False)
+            )
+            script = str(payload.get("video_script", "")).strip()
+            caption = str(payload.get("social_caption", "")).strip()
+            hashtags = self._clean_hashtags(payload.get("hashtags"))
+            script_words = len(script.split())
+            caption_words = len(caption.split())
+            if (
+                80 <= script_words <= 160
+                and 20 <= caption_words <= 90
+                and 3 <= len(hashtags) <= 8
+            ):
+                break
+        else:
+            raise ValueError(
+                "Generated content package failed duration or completeness checks."
+            )
 
         job.video_script = script[:5000]
         job.social_caption = caption[:3000]
