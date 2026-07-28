@@ -37,7 +37,7 @@ class ContentPackageServiceTests(unittest.TestCase):
         ai_client = Mock()
         ai_client.generate.return_value = """
         {
-          "video_script": "This approved campaign shows how a clear proposition can earn attention. Its focused audience and strong execution create a useful example for marketers. The Mi'yar Index score highlights the campaign's strongest choices while identifying one practical next step: add a measurable call to action. That improvement would connect creative attention to observable business impact and make the campaign easier to evaluate over time. The lesson is straightforward. Strong creative work needs a defined audience, a credible message, and an action that teams can measure. Together, those elements turn a memorable campaign into a repeatable marketing system.",
+          "video_script": "This approved campaign shows how a clear proposition earns attention. Its focused audience and strong execution create a useful example. The Mi'yar Index highlights the strongest choices while identifying one practical next step: add a measurable call to action that connects creative attention to observable business impact.",
           "social_caption": "A clear proposition earns attention, but measurable action turns attention into impact. This campaign scores strongly and offers one practical lesson for marketers.",
           "hashtags": ["TMIOS", "#Marketing", "CampaignAnalysis"]
         }
@@ -48,13 +48,14 @@ class ContentPackageServiceTests(unittest.TestCase):
         self.assertIs(generated, job)
         self.assertEqual(job.status, "generated")
         self.assertTrue(job.video_script.startswith("This approved campaign"))
+        self.assertGreaterEqual(len(job.video_script.split()), 80)
         self.assertEqual(
             job.hashtags,
             ["#TMIOS", "#Marketing", "#CampaignAnalysis"],
         )
         self.assertIsNotNone(job.generated_at)
         database.commit.assert_called_once()
-        ai_client.generate.assert_called_once()
+        self.assertEqual(ai_client.generate.call_count, 2)
 
     def test_rejects_generation_for_unapproved_campaign(self) -> None:
         database = Mock()
