@@ -137,6 +137,7 @@ services:
       READINESS_TIMEOUT_SECONDS: ${READINESS_TIMEOUT_SECONDS:-3}
       SEARXNG_URL: http://searxng:8080
       SERPER_API_KEY: ${SERPER_API_KEY:-}
+      TMPDIR: /app/media
     depends_on:
       postgres:
         condition: service_healthy
