@@ -18,3 +18,8 @@ class LocalVideoServiceTests(TestCase):
             LocalVideoService._timestamp(65.125),
             "00:01:05,125",
         )
+
+    def test_voice_allowlist(self) -> None:
+        LocalVideoService._validate_voice("af_heart")
+        with self.assertRaisesRegex(ValueError, "Unsupported"):
+            LocalVideoService._validate_voice("../../unsafe")

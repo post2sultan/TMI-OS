@@ -12,6 +12,8 @@ from app.schemas.review import EvidenceList
 from app.schemas.review import RejectRequest
 from app.schemas.review import ReviewList
 from app.schemas.review import ContentCreationList
+from app.schemas.review import GenerateMediaRequest
+from app.schemas.review import VoicePreviewResponse
 from app.services.analysis.review_service import ReviewService
 from app.services.campaign_lifecycle import CampaignTransitionError
 from app.services.content_package_service import ContentPackageService
@@ -103,15 +105,31 @@ def generate_content_package(
 )
 def generate_campaign_media(
     campaign_id: int,
+    request: GenerateMediaRequest,
     database: Session = Depends(get_db),
 ) -> ContentCreationList:
     try:
-        LocalVideoService(database).generate(campaign_id)
+        LocalVideoService(database).generate(campaign_id, request.voice_name)
     except ValueError as error:
         database.rollback()
         raise HTTPException(status_code=422, detail=str(error)) from error
     return ContentCreationList.model_validate(
         ReviewService(database).get_content_creation_jobs()
+    )
+
+
+@router.post(
+    "/media/voices/{voice_name}/preview",
+    response_model=VoicePreviewResponse,
+)
+def generate_voice_preview(voice_name: str) -> VoicePreviewResponse:
+    try:
+        preview_url = LocalVideoService.preview(voice_name)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    return VoicePreviewResponse(
+        voice_name=voice_name,
+        preview_url=preview_url,
     )
 
 

@@ -55,6 +55,12 @@ export interface ContentCreationItem {
   audio_url: string;
   video_url: string;
   media_generated_at: string | null;
+  voice_name: string;
+}
+
+export interface VoicePreviewResponse {
+  voice_name: string;
+  preview_url: string;
 }
 
 export interface ContentCreationListResponse {

@@ -9,6 +9,7 @@ import type {
   DiscoverySaveResponse,
   ReviewListResponse,
   ServiceStatus,
+  VoicePreviewResponse,
 } from "../types/api";
 
 const API_BASE_URL = (
@@ -101,11 +102,16 @@ export const api = {
       { method: "POST" },
     ),
 
-  generateCampaignMedia: (campaignId: number) =>
+  generateCampaignMedia: (campaignId: number, voiceName: string) =>
     request<ContentCreationListResponse>(
       `/campaigns/${campaignId}/media/generate`,
-      { method: "POST" },
+      { method: "POST", body: JSON.stringify({ voice_name: voiceName }) },
     ),
+
+  generateVoicePreview: (voiceName: string) =>
+    request<VoicePreviewResponse>(`/media/voices/${voiceName}/preview`, {
+      method: "POST",
+    }),
 
   getLatestAnalysis: (campaignId: number) =>
     request<AnalysisResponse>(

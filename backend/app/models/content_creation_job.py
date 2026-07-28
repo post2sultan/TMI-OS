@@ -79,3 +79,6 @@ class ContentCreationJob(Base):
     media_generated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    voice_name: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="af_heart", server_default="af_heart"
+    )

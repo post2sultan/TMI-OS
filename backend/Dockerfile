@@ -19,6 +19,9 @@ RUN groupadd --system tmi \
 COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN mkdir -p /opt/kokoro \
+    && python -c "import urllib.request; urllib.request.urlretrieve('https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx','/opt/kokoro/kokoro-v1.0.onnx'); urllib.request.urlretrieve('https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin','/opt/kokoro/voices-v1.0.bin')"
+
 COPY --chown=tmi:tmi alembic.ini ./alembic.ini
 COPY --chown=tmi:tmi alembic ./alembic
 COPY --chown=tmi:tmi app ./app
