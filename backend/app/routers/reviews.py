@@ -86,7 +86,10 @@ def generate_content_package(
     if job is None:
         raise HTTPException(
             status_code=409,
-            detail="Campaign must be approved before content generation.",
+            detail=(
+                "Campaign must be approved or published before "
+                "content generation."
+            ),
         )
     return ContentCreationList.model_validate(
         ReviewService(database).get_content_creation_jobs()

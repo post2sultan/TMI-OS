@@ -48,7 +48,7 @@ class ContentPackageService:
 
     def generate(self, campaign_id: int) -> ContentCreationJob | None:
         campaign = self.database.get(Campaign, campaign_id)
-        if campaign is None or campaign.status != "approved":
+        if campaign is None or campaign.status not in {"approved", "published"}:
             return None
         analysis = self.database.scalar(
             select(Analysis)
@@ -97,7 +97,9 @@ class ContentPackageService:
         job.video_script = script[:5000]
         job.social_caption = caption[:3000]
         job.hashtags = hashtags
-        job.status = "generated"
+        job.status = (
+            "published" if campaign.status == "published" else "generated"
+        )
         job.generated_at = datetime.now(timezone.utc)
         self.database.commit()
         self.database.refresh(job)

@@ -65,6 +65,46 @@ class ContentPackageServiceTests(unittest.TestCase):
         self.assertIsNone(result)
         database.commit.assert_not_called()
 
+    def test_published_campaign_keeps_published_status(self) -> None:
+        database = Mock()
+        campaign = SimpleNamespace(
+            id=7,
+            status="published",
+            title="Published Campaign",
+            description="Published description.",
+        )
+        analysis = SimpleNamespace(
+            id=10,
+            review_status="approved",
+            total_score=80,
+            summary="Published summary.",
+            strengths=["Strength"],
+            recommendations=["Recommendation"],
+        )
+        job = ContentCreationJob(
+            campaign_id=7,
+            analysis_id=10,
+            status="published",
+            video_script="",
+            social_caption="",
+            hashtags=[],
+        )
+        database.get.return_value = campaign
+        database.scalar.side_effect = [analysis, job]
+        ai_client = Mock()
+        ai_client.generate.return_value = (
+            '{"video_script":"'
+            + ("A factual campaign sentence. " * 8)
+            + '","social_caption":"A factual published campaign caption '
+            'with a clear marketing lesson.","hashtags":'
+            '["TMIOS","Marketing","Campaign"]}'
+        )
+
+        generated = ContentPackageService(database, ai_client).generate(7)
+
+        self.assertIs(generated, job)
+        self.assertEqual(job.status, "published")
+
 
 if __name__ == "__main__":
     unittest.main()
