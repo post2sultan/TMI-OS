@@ -23,6 +23,7 @@ COPY --chown=tmi:tmi alembic.ini ./alembic.ini
 COPY --chown=tmi:tmi alembic ./alembic
 COPY --chown=tmi:tmi app ./app
 COPY --chown=tmi:tmi prompts ./prompts
+COPY --chown=tmi:tmi tests ./tests
 
 USER tmi
 
