@@ -37,7 +37,7 @@ try { $challengeBytes = $sha.ComputeHash([Text.Encoding]::ASCII.GetBytes($verifi
 finally { $sha.Dispose() }
 $challenge = [Convert]::ToBase64String($challengeBytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
 $scopes = "openid profile w_member_social"
-$authorizeUri = "https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=$([uri]::EscapeDataString($clientId))&redirect_uri=$([uri]::EscapeDataString($RedirectUri))&state=$([uri]::EscapeDataString($state))&scope=$([uri]::EscapeDataString($scopes))&code_challenge=$([uri]::EscapeDataString($challenge))&code_challenge_method=S256"
+$authorizeUri = "https://www.linkedin.com/oauth/native-pkce/authorization?response_type=code&client_id=$([uri]::EscapeDataString($clientId))&redirect_uri=$([uri]::EscapeDataString($RedirectUri))&state=$([uri]::EscapeDataString($state))&scope=$([uri]::EscapeDataString($scopes))&code_challenge=$([uri]::EscapeDataString($challenge))&code_challenge_method=S256"
 
 $redirect = [uri]$RedirectUri
 if ($redirect.Host -ne "127.0.0.1") { throw "LinkedIn redirect must use the 127.0.0.1 loopback address." }
@@ -79,7 +79,6 @@ try {
         code = $code
         redirect_uri = $RedirectUri
         client_id = $clientId
-        client_secret = $clientSecret
         code_verifier = $verifier
     }
     if (-not $token.access_token) { throw "LinkedIn token response was incomplete." }
