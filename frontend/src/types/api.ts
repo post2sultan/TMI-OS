@@ -75,6 +75,11 @@ export interface ContentCreationItem {
   instagram_story_error: string;
   instagram_story_attempts: number;
   instagram_story_requested_at: string | null;
+  tiktok_status: string;
+  tiktok_publish_id: string;
+  tiktok_error: string;
+  tiktok_attempts: number;
+  tiktok_requested_at: string | null;
 }
 
 export interface VoicePreviewResponse {
