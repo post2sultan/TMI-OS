@@ -31,13 +31,8 @@ function Open-InBrave([string]$Uri) {
 }
 
 $state = New-RandomUrlSafeString 24
-$verifier = New-RandomUrlSafeString 48
-$sha = [Security.Cryptography.SHA256]::Create()
-try { $challengeBytes = $sha.ComputeHash([Text.Encoding]::ASCII.GetBytes($verifier)) }
-finally { $sha.Dispose() }
-$challenge = [Convert]::ToBase64String($challengeBytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
 $scopes = "openid profile w_member_social"
-$authorizeUri = "https://www.linkedin.com/oauth/native-pkce/authorization?response_type=code&client_id=$([uri]::EscapeDataString($clientId))&redirect_uri=$([uri]::EscapeDataString($RedirectUri))&state=$([uri]::EscapeDataString($state))&scope=$([uri]::EscapeDataString($scopes))&code_challenge=$([uri]::EscapeDataString($challenge))&code_challenge_method=S256"
+$authorizeUri = "https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=$([uri]::EscapeDataString($clientId))&redirect_uri=$([uri]::EscapeDataString($RedirectUri))&state=$([uri]::EscapeDataString($state))&scope=$([uri]::EscapeDataString($scopes))"
 
 $redirect = [uri]$RedirectUri
 if ($redirect.Host -ne "127.0.0.1") { throw "LinkedIn redirect must use the 127.0.0.1 loopback address." }
@@ -79,7 +74,7 @@ try {
         code = $code
         redirect_uri = $RedirectUri
         client_id = $clientId
-        code_verifier = $verifier
+        client_secret = $clientSecret
     }
     if (-not $token.access_token) { throw "LinkedIn token response was incomplete." }
     $profile = Invoke-RestMethod -Method Get -Uri "https://api.linkedin.com/v2/userinfo" -Headers @{ Authorization = "Bearer $($token.access_token)" }
@@ -103,5 +98,4 @@ try {
     $code = $null
     $token = $null
     $profile = $null
-    $verifier = $null
 }
