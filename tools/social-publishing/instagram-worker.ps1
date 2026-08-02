@@ -20,8 +20,8 @@ function Report([string]$path,[hashtable]$body){Invoke-RestMethod -Method Post "
 try {
   $sourceUrl=[string]$job.video_url
   if($Story){
-    $source="/app/media/campaign-$($job.campaign_id)/video.mp4"; $story="/app/media/campaign-$($job.campaign_id)/instagram-story-59s.mp4"
-    & docker exec tmi-production-backend-1 ffmpeg -y -i $source -t 59 -c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -movflags +faststart $story 2>$null
+    $source="/app/media/campaign-$($job.campaign_id)/video.mp4"; $storyPath="/app/media/campaign-$($job.campaign_id)/instagram-story-59s.mp4"
+    & docker exec tmi-production-backend-1 ffmpeg -y -i $source -t 59 -c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -movflags +faststart $storyPath 2>$null
     if($LASTEXITCODE -ne 0){throw "Could not create the Instagram Story duration-safe copy."}
     $sourceUrl="/api/media/campaign-$($job.campaign_id)/instagram-story-59s.mp4"
   }
