@@ -163,5 +163,60 @@ export interface DiscoveryHistoryResponse {
   offset: number;
 }
 
+export interface RadarCluster {
+  id: number;
+  title: string;
+  status: string;
+  signal_count: number;
+  source_count: number;
+  confidence_score: number;
+  trend_score: number;
+  matched_entities: string[];
+  score_rationale: string;
+  last_seen_at: string;
+  promoted_campaign_id: number | null;
+}
+
+export interface RadarClusterListResponse {
+  items: RadarCluster[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface RadarWatchlist {
+  id: number;
+  name: string;
+  market: string;
+  active: boolean;
+}
+
+export interface RadarWatchlistListResponse {
+  items: RadarWatchlist[];
+  total: number;
+}
+
+export interface RadarSource {
+  id: number;
+  name: string;
+  source_type: string;
+  enabled: boolean;
+  last_status: string;
+  last_error: string;
+  last_results: number;
+  last_polled_at: string | null;
+}
+
+export interface RadarSourceListResponse {
+  items: RadarSource[];
+  total: number;
+}
+
+export interface RadarPromotionResponse {
+  cluster_id: number;
+  campaign_id: number;
+  created: boolean;
+}
+
 export type ServiceStatus = Record<string, string>;
 export type ActionResponse = Record<string, string>;

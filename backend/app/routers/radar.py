@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.campaign_cluster import CampaignCluster
+from app.models.campaign import Campaign
 from app.models.discovery_signal import DiscoverySignal
 from app.models.radar_watchlist import RadarWatchlist
 from app.models.radar_source import RadarSource
@@ -16,6 +17,7 @@ from app.services.radar_query_planner import QueryPlanInput, radar_query_planner
 from app.services.radar_signal_service import radar_signal_service
 from app.services.radar_source_monitor import radar_source_monitor
 from app.services.url_normalizer import normalize_url
+from app.services.campaign_fingerprint import generate_campaign_fingerprint
 
 
 router = APIRouter(prefix="/radar", tags=["radar"])
@@ -114,6 +116,8 @@ def _cluster_dict(cluster: CampaignCluster) -> dict:
         "matched_entities": cluster.matched_entities,
         "score_rationale": cluster.score_rationale,
         "score_version": cluster.score_version,
+        "promoted_campaign_id": cluster.promoted_campaign_id,
+        "promoted_at": cluster.promoted_at,
         "first_seen_at": cluster.first_seen_at,
         "last_seen_at": cluster.last_seen_at,
     }
@@ -249,3 +253,38 @@ def list_cluster_signals(cluster_id: int, database: Session = Depends(get_db)) -
         raise HTTPException(status_code=404, detail="Campaign cluster not found.")
     items = list(database.scalars(select(DiscoverySignal).where(DiscoverySignal.cluster_id == cluster_id).order_by(DiscoverySignal.last_seen_at.desc())))
     return {"items": items, "total": len(items)}
+
+
+@router.post("/clusters/{cluster_id}/promote")
+def promote_cluster(cluster_id: int, database: Session = Depends(get_db)) -> dict:
+    cluster = database.get(CampaignCluster, cluster_id)
+    if cluster is None:
+        raise HTTPException(status_code=404, detail="Campaign cluster not found.")
+    if cluster.promoted_campaign_id is not None:
+        return {"cluster_id": cluster.id, "campaign_id": cluster.promoted_campaign_id, "created": False}
+    signal = database.scalar(
+        select(DiscoverySignal)
+        .where(DiscoverySignal.cluster_id == cluster_id)
+        .order_by(DiscoverySignal.last_seen_at.desc(), DiscoverySignal.id.desc())
+    )
+    if signal is None:
+        raise HTTPException(status_code=409, detail="Candidate has no source signal to promote.")
+    normalized_url = normalize_url(signal.url)
+    campaign = database.scalar(select(Campaign).where(Campaign.url == normalized_url))
+    created = campaign is None
+    if campaign is None:
+        campaign = Campaign(
+            title=cluster.title[:500],
+            url=normalized_url,
+            fingerprint=generate_campaign_fingerprint(title=cluster.title, url=normalized_url),
+            source=signal.provider[:100],
+            description=signal.description,
+            content=signal.content,
+        )
+        database.add(campaign)
+        database.flush()
+    cluster.promoted_campaign_id = campaign.id
+    cluster.promoted_at = func.now()
+    cluster.status = "promoted"
+    database.commit()
+    return {"cluster_id": cluster.id, "campaign_id": campaign.id, "created": created}

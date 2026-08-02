@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, Integer, JSON, String, Text, func
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -31,6 +31,10 @@ class CampaignCluster(Base):
     matched_entities: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     score_rationale: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     score_version: Mapped[str] = mapped_column(String(20), nullable=False, default="radar-07", server_default="radar-07")
+    promoted_campaign_id: Mapped[int | None] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="SET NULL"), nullable=True, unique=True
+    )
+    promoted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     first_seen_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
