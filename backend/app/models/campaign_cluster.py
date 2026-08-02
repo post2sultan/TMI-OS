@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, Integer, String, Text, func
+from sqlalchemy import DateTime, Float, Integer, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -25,6 +25,12 @@ class CampaignCluster(Base):
     confidence_score: Mapped[float] = mapped_column(
         Float, nullable=False, default=0.0, server_default="0"
     )
+    trend_score: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.0, server_default="0"
+    )
+    matched_entities: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    score_rationale: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    score_version: Mapped[str] = mapped_column(String(20), nullable=False, default="radar-07", server_default="radar-07")
     first_seen_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
