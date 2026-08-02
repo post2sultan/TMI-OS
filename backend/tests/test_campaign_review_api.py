@@ -44,6 +44,7 @@ class CampaignReviewServiceTests(unittest.TestCase):
             published_at=None,
             video_script="Complete video script",
             social_caption="Complete social caption",
+            video_url="/media/campaign-7/video.mp4",
         )
         database.scalar.return_value = job
         service = ReviewService(database)

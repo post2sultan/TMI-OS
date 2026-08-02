@@ -22,8 +22,6 @@ $platformFields = @{
     TikTok = [ordered]@{
         TIKTOK_CLIENT_KEY = "TikTok client key"
         TIKTOK_CLIENT_SECRET = "TikTok client secret"
-        TIKTOK_ACCESS_TOKEN = "TikTok access token"
-        TIKTOK_OPEN_ID = "TikTok creator open ID"
     }
     LinkedIn = [ordered]@{
         LINKEDIN_CLIENT_ID = "LinkedIn client ID"
