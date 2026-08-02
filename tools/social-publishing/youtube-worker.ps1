@@ -12,20 +12,28 @@ $vaultPath = Join-Path $Root "docker\.env.social.vault.json"
 $required = @("YOUTUBE_CLIENT_ID", "YOUTUBE_CLIENT_SECRET", "YOUTUBE_REFRESH_TOKEN", "YOUTUBE_CHANNEL_ID")
 Test-TmiSocialVault -Path $vaultPath -RequiredKeys $required | Out-Null
 $vault = Get-Content -LiteralPath $vaultPath -Raw | ConvertFrom-Json
+$envPath = Join-Path $Root "docker\.env.production.local"
+$accessPath = "$envPath.access.txt"
+$webUser = ((Get-Content -LiteralPath $envPath | Where-Object { $_ -match '^TMI_WEB_USER=' }) -split '=', 2)[1]
+$passwordLine = Get-Content -LiteralPath $accessPath | Where-Object { $_ -match '^One-time TMI web password:' }
+$webPassword = ($passwordLine -split ':', 2)[1].Trim()
+if (-not $webUser -or -not $webPassword) { throw "Local TMI web credentials are unavailable." }
+$basic = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("${webUser}:${webPassword}"))
+$localHeaders = @{ Authorization = "Basic $basic" }
 
 function Secret([string]$Name) { Unprotect-TmiSecret $vault.values.$Name }
 
 function Send-Result([int]$JobId, [string]$Path, [hashtable]$Body) {
     Invoke-RestMethod -Method Post -Uri "$BaseUrl/api/publishing/youtube/$JobId/$Path" `
-        -ContentType "application/json" -Body ($Body | ConvertTo-Json -Compress) | Out-Null
+        -Headers $localHeaders -ContentType "application/json" -Body ($Body | ConvertTo-Json -Compress) | Out-Null
 }
 
 function Invoke-YouTubeJob {
-    $job = Invoke-RestMethod -Uri "$BaseUrl/api/publishing/youtube/next"
+    $job = Invoke-RestMethod -Uri "$BaseUrl/api/publishing/youtube/next" -Headers $localHeaders
     if ($job.status -eq "empty") { return $false }
     $temp = Join-Path ([IO.Path]::GetTempPath()) ("tmi-youtube-{0}-{1}.mp4" -f $job.job_id, [guid]::NewGuid().ToString("N"))
     try {
-        Invoke-WebRequest -Uri "$BaseUrl$($job.video_url)" -OutFile $temp
+        Invoke-WebRequest -Uri "$BaseUrl$($job.video_url)" -Headers $localHeaders -OutFile $temp
         if ((Get-Item -LiteralPath $temp).Length -lt 10000) { throw "Generated video file is invalid." }
         $token = Invoke-RestMethod -Method Post -Uri "https://oauth2.googleapis.com/token" -ContentType "application/x-www-form-urlencoded" -Body @{
             client_id = Secret "YOUTUBE_CLIENT_ID"
@@ -57,6 +65,7 @@ function Invoke-YouTubeJob {
     finally {
         if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Force }
         $token = $null
+        $webPassword = $null
     }
     return $true
 }

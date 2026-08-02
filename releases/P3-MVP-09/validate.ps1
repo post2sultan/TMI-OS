@@ -4,4 +4,5 @@ $ErrorActionPreference = "Stop"
 $worker = Get-Content -LiteralPath (Join-Path $Root "tools\social-publishing\youtube-worker.ps1") -Raw
 if ($worker -notmatch 'privacyStatus = "private"') { throw "Private-by-default guard is missing." }
 if ($worker -match 'privacyStatus = "public"') { throw "Public publishing is forbidden in this milestone." }
+if ($worker -notmatch '\-Headers \$localHeaders') { throw "Production local-auth guard is missing." }
 Write-Host "P3-MVP-09 validation PASSED."
