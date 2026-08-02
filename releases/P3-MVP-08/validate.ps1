@@ -8,12 +8,12 @@ foreach ($path in @($module, $authorize)) {
     if ($errors.Count) { throw "PowerShell syntax validation failed: $path" }
 }
 $authorizeText = Get-Content -LiteralPath $authorize -Raw
-if ($authorizeText -notmatch [regex]::Escape("/oauth/native-pkce/authorization")) {
-    throw "LinkedIn helper is not using the native PKCE authorization endpoint."
+if ($authorizeText -notmatch [regex]::Escape("/oauth/v2/authorization")) {
+    throw "LinkedIn helper is not using the OpenID-compatible authorization endpoint."
 }
 $tokenBody = [regex]::Match($authorizeText, '(?s)accessToken.*?-Body @\{(?<body>.*?)\n\s*\}').Groups['body'].Value
-if ($tokenBody -match 'client_secret') {
-    throw "Native PKCE token exchange must not transmit the client secret."
+if ($tokenBody -notmatch 'client_secret') {
+    throw "Confidential OAuth token exchange must authenticate with the encrypted client secret."
 }
 Import-Module $module -Force
 $testVault = Join-Path $Root "tmp\social-vault-08-self-test.json"
