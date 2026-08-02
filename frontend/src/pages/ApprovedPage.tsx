@@ -124,7 +124,7 @@ export function ApprovedPage() {
           description="Approved review records will appear here."
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4">
           {approved.map((item) => (
             (() => {
               const job = jobByCampaign.get(item.campaign_id);
@@ -136,16 +136,16 @@ export function ApprovedPage() {
               return (
             <article
               key={item.analysis_id}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-emerald-300"
+              className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-emerald-300"
             >
               <div className="flex items-start justify-between gap-4">
                 <Link
                   to={`/campaigns/${item.campaign_id}`}
-                  className="font-semibold text-slate-950 hover:text-blue-700"
+                  className="min-w-0 break-words font-semibold text-slate-950 hover:text-blue-700"
                 >
                   {item.campaign_title}
                 </Link>
-                <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold uppercase text-emerald-800">
+                <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold uppercase text-emerald-800">
                   Approved
                 </span>
               </div>
@@ -156,11 +156,11 @@ export function ApprovedPage() {
                 <span>Score {normalizeScore(item.total_score)}</span>
                 <span>{formatDate(item.created_at)}</span>
               </div>
-              <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
+              <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-4 xl:flex-row xl:items-start xl:justify-between">
                 <span className="text-xs font-semibold uppercase text-blue-700">
                   Content {job?.status ?? "queued"}
                 </span>
-                <div className="flex gap-2">
+                <div className="flex min-w-0 flex-wrap gap-2">
                   <select
                     aria-label="Narration voice"
                     value={selectedVoice}
@@ -170,7 +170,7 @@ export function ApprovedPage() {
                         [item.campaign_id]: event.target.value,
                       }))
                     }
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                    className="max-w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                   >
                     <option value="af_heart">Heart — US female (default)</option>
                     <option value="af_bella">Bella — US female</option>
@@ -202,7 +202,7 @@ export function ApprovedPage() {
                         voiceName: selectedVoice,
                       })
                     }
-                    className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 whitespace-normal rounded-xl border border-emerald-200 px-4 py-2 text-left text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
                   >
                     {generateMedia.isPending ? (
                       <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -215,7 +215,7 @@ export function ApprovedPage() {
                     type="button"
                     disabled={generate.isPending}
                     onClick={() => generate.mutate(item.campaign_id)}
-                    className="inline-flex items-center gap-2 rounded-xl border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 whitespace-normal rounded-xl border border-blue-200 px-4 py-2 text-left text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-50"
                   >
                     {generate.isPending ? (
                       <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -228,7 +228,7 @@ export function ApprovedPage() {
                     type="button"
                     disabled={!generated || publish.isPending}
                     onClick={() => publish.mutate(item.campaign_id)}
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 whitespace-normal rounded-xl bg-blue-700 px-4 py-2 text-left text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
                   >
                     {publish.isPending ? (
                       <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -326,7 +326,7 @@ export function ApprovedPage() {
                       <video
                         controls
                         preload="metadata"
-                        className="mx-auto max-h-[32rem] rounded-xl bg-slate-950"
+                        className="mx-auto max-h-[32rem] w-full max-w-sm rounded-xl bg-slate-950"
                         src={job.video_url}
                       />
                       <a

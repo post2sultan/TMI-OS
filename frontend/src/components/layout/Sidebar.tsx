@@ -48,8 +48,22 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     <Icon size={18} strokeWidth={2} />
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold">{item.label}</span>
-                    <span className="mt-0.5 block truncate text-[11px] text-slate-500">{item.description}</span>
+                    <span
+                      className={[
+                        "block truncate text-sm font-semibold",
+                        isActive ? "text-slate-950" : "text-slate-300 group-hover:text-white",
+                      ].join(" ")}
+                    >
+                      {item.label}
+                    </span>
+                    <span
+                      className={[
+                        "mt-0.5 block truncate text-[11px]",
+                        isActive ? "text-slate-600" : "text-slate-500 group-hover:text-slate-300",
+                      ].join(" ")}
+                    >
+                      {item.description}
+                    </span>
                   </span>
                 </>
               )}
