@@ -8,6 +8,10 @@ import type {
   DiscoveryHistoryResponse,
   DiscoverySaveResponse,
   ReviewListResponse,
+  RadarClusterListResponse,
+  RadarPromotionResponse,
+  RadarSourceListResponse,
+  RadarWatchlistListResponse,
   ServiceStatus,
   VoicePreviewResponse,
 } from "../types/api";
@@ -82,6 +86,28 @@ export const api = {
     request<DiscoverySaveResponse>("/radar/discover", {
       method: "POST",
       body: JSON.stringify({ prompt }),
+    }),
+
+  discoverWatchlist: (watchlistId: number) =>
+    request<DiscoverySaveResponse>("/radar/discover", {
+      method: "POST",
+      body: JSON.stringify({ watchlist_id: watchlistId }),
+    }),
+
+  listRadarClusters: (status = "", sort = "trend", limit = 50) =>
+    request<RadarClusterListResponse>(
+      `/radar/clusters?sort=${encodeURIComponent(sort)}&status=${encodeURIComponent(status)}&limit=${limit}`,
+    ),
+
+  listRadarWatchlists: () =>
+    request<RadarWatchlistListResponse>("/radar/watchlists"),
+
+  listRadarSources: () =>
+    request<RadarSourceListResponse>("/radar/sources"),
+
+  promoteRadarCluster: (clusterId: number) =>
+    request<RadarPromotionResponse>(`/radar/clusters/${clusterId}/promote`, {
+      method: "POST",
     }),
 
   listDiscoveryHistory: (limit = 10, offset = 0) =>

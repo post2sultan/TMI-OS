@@ -1,14 +1,5 @@
-﻿import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Clock3,
-  ExternalLink,
-  History,
-  LoaderCircle,
-  Radar,
-  Search,
-} from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Activity, CheckCircle2, LoaderCircle, Radar, RefreshCw, Search, ShieldCheck, Signal, TrendingUp } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -16,317 +7,144 @@ import { ErrorState, LoadingState, NoDataState } from "../components/shared/Live
 import { api } from "../lib/api";
 import { formatDate } from "../lib/format";
 
-function providerStatus(status: string) {
-  const normalized = status.trim().toUpperCase();
-
-  if (normalized === "SUCCESS") {
-    return {
-      label: "Operational",
-      className: "bg-emerald-50 text-emerald-700",
-    };
-  }
-
-  if (normalized === "FAILED") {
-    return {
-      label: "Failed",
-      className: "bg-rose-50 text-rose-700",
-    };
-  }
-
-  return {
-    label: normalized || "Unknown",
-    className: "bg-amber-50 text-amber-700",
-  };
+function scoreTone(score: number) {
+  if (score >= 70) return "bg-emerald-100 text-emerald-800";
+  if (score >= 40) return "bg-amber-100 text-amber-800";
+  return "bg-slate-100 text-slate-700";
 }
 
 export function CampaignRadarPage() {
-  const historyPageSize = 10;
   const [prompt, setPrompt] = useState("");
-  const [historyOffset, setHistoryOffset] = useState(0);
+  const [status, setStatus] = useState("");
+  const [watchlistId, setWatchlistId] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
-  const campaigns = useQuery({
-    queryKey: ["campaigns"],
-    queryFn: () => api.listCampaigns(),
+  const clusters = useQuery({
+    queryKey: ["radar-clusters", status],
+    queryFn: () => api.listRadarClusters(status),
   });
+  const watchlists = useQuery({ queryKey: ["radar-watchlists"], queryFn: api.listRadarWatchlists });
+  const sources = useQuery({ queryKey: ["radar-sources"], queryFn: api.listRadarSources });
 
-  const history = useQuery({
-    queryKey: ["discovery-history", historyPageSize, historyOffset],
-    queryFn: () =>
-      api.listDiscoveryHistory(historyPageSize, historyOffset),
-  });
+  const refreshRadar = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["radar-clusters"] }),
+      queryClient.invalidateQueries({ queryKey: ["radar-sources"] }),
+    ]);
+  };
 
   const discovery = useMutation({
-    mutationFn: api.discoverAndSave,
+    mutationFn: () => watchlistId ? api.discoverWatchlist(watchlistId) : api.discoverAndSave(prompt.trim()),
     onSuccess: async (result) => {
-      toast.success(
-        `Radar scan complete: ${result.created} new signals, ${result.skipped} previously seen.`,
-      );
+      toast.success(`Scan complete: ${result.created} new signals, ${result.skipped} seen again.`);
       setPrompt("");
+      await refreshRadar();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const promotion = useMutation({
+    mutationFn: api.promoteRadarCluster,
+    onSuccess: async (result) => {
+      toast.success(`Candidate moved to campaign #${result.campaign_id}.`);
+      await refreshRadar();
       await queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      await queryClient.invalidateQueries({ queryKey: ["reviews"] });
-      setHistoryOffset(0);
-      await queryClient.invalidateQueries({
-        queryKey: ["discovery-history"],
-      });
     },
     onError: (error: Error) => toast.error(error.message),
   });
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const value = prompt.trim();
-    if (!value) {
-      toast.error("Enter a discovery brief.");
-      return;
-    }
-    discovery.mutate(value);
+    if (!watchlistId && !prompt.trim()) return toast.error("Select a watchlist or enter a discovery brief.");
+    discovery.mutate();
   }
 
+  const candidates = clusters.data?.items ?? [];
+  const corroborated = candidates.filter((item) => item.status === "corroborated").length;
+  const healthySources = sources.data?.items.filter((item) => item.last_status === "healthy").length ?? 0;
+
   return (
-    <div className="space-y-7">
-      <header>
-        <p className="text-sm font-semibold text-blue-700">DISCOVERY ENGINE</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-          Campaign Radar
-        </h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Search, qualify and save real campaign records through the backend.
-        </p>
+    <div className="space-y-6">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-blue-700">CAMPAIGN INTELLIGENCE</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Radar command center</h1>
+          <p className="mt-2 text-sm text-slate-500">Signals become campaigns only after your confirmation.</p>
+        </div>
+        <button type="button" onClick={() => void refreshRadar()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          <RefreshCw className="h-4 w-4" /> Refresh
+        </button>
       </header>
 
-      <form
-        onSubmit={submit}
-        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-      >
-        <label
-          htmlFor="discovery-prompt"
-          className="text-sm font-semibold text-slate-900"
-        >
-          Discovery brief
-        </label>
-        <div className="mt-3 flex flex-col gap-3 lg:flex-row">
-          <textarea
-            id="discovery-prompt"
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            rows={3}
-            placeholder="Find recent Saudi campaigns across digital, outdoor and social media..."
-            className="min-h-24 flex-1 resize-y rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-          />
-          <button
-            type="submit"
-            disabled={discovery.isPending}
-            className="inline-flex min-w-40 items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {discovery.isPending ? (
-              <LoaderCircle className="h-4 w-4 animate-spin" />
-            ) : (
-              <Search className="h-4 w-4" />
-            )}
-            Discover & save
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          [Radar, "Candidates", clusters.data?.total ?? 0, "Ranked local clusters"],
+          [ShieldCheck, "Corroborated", corroborated, "Multiple supporting signals"],
+          [Activity, "Healthy sources", `${healthySources}/${sources.data?.total ?? 0}`, "Free monitored sources"],
+          [Signal, "Paid credits", "0", "Local-first intelligence"],
+        ].map(([Icon, label, value, note]) => {
+          const MetricIcon = Icon as typeof Radar;
+          return <article key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between"><p className="text-sm font-medium text-slate-500">{String(label)}</p><MetricIcon className="h-5 w-5 text-blue-700" /></div>
+            <p className="mt-3 text-3xl font-bold text-slate-950">{String(value)}</p><p className="mt-1 text-xs text-slate-400">{String(note)}</p>
+          </article>;
+        })}
+      </section>
+
+      <form onSubmit={submit} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)_auto] lg:items-end">
+          <label className="text-sm font-semibold text-slate-900">Watchlist
+            <select value={watchlistId ?? ""} onChange={(event) => setWatchlistId(event.target.value ? Number(event.target.value) : null)} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 focus:border-blue-600 focus:ring-4 focus:ring-blue-100">
+              <option value="">Custom discovery brief</option>
+              {watchlists.data?.items.filter((item) => item.active).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+            </select>
+          </label>
+          <label className="text-sm font-semibold text-slate-900">Discovery brief
+            <input value={prompt} disabled={watchlistId !== null} onChange={(event) => setPrompt(event.target.value)} placeholder="Saudi outdoor, digital or social campaign..." className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 disabled:bg-slate-100 disabled:text-slate-500" />
+          </label>
+          <button disabled={discovery.isPending} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-60">
+            {discovery.isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Run scan
           </button>
         </div>
       </form>
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <History className="h-5 w-5 text-blue-700" />
-              <h2 className="font-semibold text-slate-950">
-                Discovery history
-              </h2>
-            </div>
-            <p className="mt-1 text-sm text-slate-500">
-              Provider execution status, results and runtime.
-            </p>
-          </div>
-          {history.data ? (
-            <p className="text-sm font-medium text-slate-500">
-              {history.data.total} provider runs
-            </p>
-          ) : null}
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div><h2 className="font-semibold text-slate-950">Campaign candidates</h2><p className="mt-1 text-sm text-slate-500">Ranked by trend, confidence, corroboration and recency.</p></div>
+          <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900">
+            <option value="">All candidates</option><option value="corroborated">Corroborated</option><option value="candidate">Early signals</option><option value="promoted">Promoted</option>
+          </select>
         </div>
-
-        {history.isLoading || !history.data ? (
-          <div className="p-5">
-            <LoadingState label="Loading discovery history..." />
-          </div>
-        ) : history.isError ? (
-          <div className="p-5">
-            <ErrorState
-              message="Discovery history could not be loaded."
-              onRetry={() => void history.refetch()}
-            />
-          </div>
-        ) : history.data.items.length === 0 ? (
-          <div className="p-5">
-            <NoDataState
-              title="No discovery runs yet"
-              description="Run the discovery engine to record provider activity."
-            />
-          </div>
-        ) : (
-          <>
-            <div className="divide-y divide-slate-100">
-              {history.data.items.map((run) => {
-                const status = providerStatus(run.status);
-
-                return (
-                  <article
-                    key={run.id}
-                    className="grid gap-3 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto]"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-950">
-                        {run.query}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-400">
-                        {formatDate(run.created_at)}
-                      </p>
-                    </div>
-                    <div className="text-sm">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                        Provider
-                      </p>
-                      <p className="mt-1 font-semibold text-slate-700">
-                        {run.provider}
-                      </p>
-                    </div>
-                    <div className="text-sm">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                        Results / cost
-                      </p>
-                      <p className="mt-1 font-semibold text-slate-700">
-                        {run.results_found} results ·{" "}
-                        {run.credits_used === 0
-                          ? "Free"
-                          : `${run.credits_used} credits`}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 lg:min-w-48 lg:justify-end">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}
-                      >
-                        {status.label}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                        <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
-                        {run.duration_ms} ms
-                      </span>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4">
-              <p className="text-xs text-slate-500">
-                Showing {historyOffset + 1}â€“
-                {Math.min(
-                  historyOffset + history.data.items.length,
-                  history.data.total,
-                )}{" "}
-                of {history.data.total}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  aria-label="Previous discovery history page"
-                  disabled={historyOffset === 0}
-                  onClick={() =>
-                    setHistoryOffset((offset) =>
-                      Math.max(0, offset - historyPageSize),
-                    )
-                  }
-                  className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Next discovery history page"
-                  disabled={
-                    historyOffset + history.data.items.length >=
-                    history.data.total
-                  }
-                  onClick={() =>
-                    setHistoryOffset((offset) => offset + historyPageSize)
-                  }
-                  className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+        {clusters.isLoading ? <div className="p-5"><LoadingState label="Ranking candidates..." /></div> : clusters.isError ? <div className="p-5"><ErrorState message="Radar candidates could not be loaded." onRetry={() => void clusters.refetch()} /></div> : candidates.length === 0 ? <div className="p-5"><NoDataState title="No candidates in this view" description="Run a scan or change the filter." /></div> : (
+          <div className="grid gap-4 p-5 xl:grid-cols-2">
+            {candidates.map((candidate) => <article key={candidate.id} className="min-w-0 rounded-2xl border border-slate-200 p-5 hover:border-blue-200 hover:shadow-sm">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Candidate #{candidate.id}</p><h3 className="mt-1 font-semibold leading-6 text-slate-950">{candidate.title}</h3></div>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${candidate.status === "corroborated" ? "bg-emerald-100 text-emerald-800" : candidate.status === "promoted" ? "bg-blue-100 text-blue-800" : "bg-slate-100 text-slate-700"}`}>{candidate.status}</span>
               </div>
-            </div>
-          </>
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div><p className="text-xs text-slate-400">Trend</p><p className={`mt-1 inline-flex rounded-lg px-2 py-1 text-sm font-bold ${scoreTone(candidate.trend_score)}`}>{candidate.trend_score}</p></div>
+                <div><p className="text-xs text-slate-400">Confidence</p><p className="mt-2 text-sm font-bold text-slate-800">{Math.round(candidate.confidence_score * 100)}%</p></div>
+                <div><p className="text-xs text-slate-400">Signals</p><p className="mt-2 text-sm font-bold text-slate-800">{candidate.signal_count}</p></div>
+                <div><p className="text-xs text-slate-400">Sources</p><p className="mt-2 text-sm font-bold text-slate-800">{candidate.source_count}</p></div>
+              </div>
+              {candidate.matched_entities.length > 0 && <div className="mt-4 flex flex-wrap gap-2">{candidate.matched_entities.map((entity) => <span key={entity} className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">{entity}</span>)}</div>}
+              <p className="mt-4 text-xs leading-5 text-slate-500">{candidate.score_rationale}</p>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                <span className="inline-flex items-center gap-1 text-xs text-slate-400"><TrendingUp className="h-3.5 w-3.5" /> Seen {formatDate(candidate.last_seen_at)}</span>
+                {candidate.promoted_campaign_id ? <Link to={`/campaigns/${candidate.promoted_campaign_id}`} className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700"><CheckCircle2 className="h-4 w-4" /> Campaign #{candidate.promoted_campaign_id}</Link> : <button type="button" disabled={promotion.isPending} onClick={() => promotion.mutate(candidate.id)} className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-60">Confirm as campaign</button>}
+              </div>
+            </article>)}
+          </div>
         )}
       </section>
 
-      {campaigns.isLoading || !campaigns.data ? (
-        <LoadingState label="Loading campaign library..." />
-      ) : campaigns.isError ? (
-        <ErrorState
-          message="Campaign records could not be loaded."
-          onRetry={() => void campaigns.refetch()}
-        />
-      ) : campaigns.data.items.length === 0 ? (
-        <NoDataState
-          title="Campaign library is empty"
-          description="Run the discovery engine above to save the first qualified campaigns."
-        />
-      ) : (
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-            <div>
-              <h2 className="font-semibold text-slate-950">Campaign library</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                {campaigns.data.total} live records
-              </p>
-            </div>
-            <Radar className="h-5 w-5 text-blue-700" />
-          </div>
-
-          <div className="divide-y divide-slate-100">
-            {campaigns.data.items.map((campaign) => (
-              <article
-                key={campaign.id}
-                className="grid gap-4 px-5 py-5 hover:bg-slate-50 lg:grid-cols-[1fr_auto]"
-              >
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      to={`/campaigns/${campaign.id}`}
-                      className="font-semibold text-slate-950 hover:text-blue-700"
-                    >
-                      {campaign.title}
-                    </Link>
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                      {campaign.source}
-                    </span>
-                  </div>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
-                    {campaign.description || "No description stored."}
-                  </p>
-                  <p className="mt-3 text-xs text-slate-400">
-                    Added {formatDate(campaign.created_at)}
-                  </p>
-                </div>
-                <a
-                  href={campaign.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-fit items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-900"
-                >
-                  Source
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="font-semibold text-slate-950">Source health</h2>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {sources.data?.items.map((source) => <div key={source.id} className="rounded-xl border border-slate-200 p-4"><div className="flex items-center justify-between gap-2"><p className="truncate text-sm font-semibold text-slate-800">{source.name}</p><span className={`h-2.5 w-2.5 rounded-full ${source.last_status === "healthy" ? "bg-emerald-500" : source.last_status === "error" ? "bg-rose-500" : "bg-amber-400"}`} /></div><p className="mt-2 text-xs text-slate-500">{source.source_type.toUpperCase()} · {source.last_results} latest results</p>{source.last_error && <p className="mt-2 line-clamp-2 text-xs text-rose-600">{source.last_error}</p>}</div>)}
+        </div>
+      </section>
     </div>
   );
 }
