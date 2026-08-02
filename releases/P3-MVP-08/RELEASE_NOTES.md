@@ -1,6 +1,6 @@
 # P3-MVP-08 — Local LinkedIn OAuth
 
-- Adds local LinkedIn OAuth with PKCE, CSRF state validation, and a loopback-only callback.
+- Adds local LinkedIn OAuth using the native PKCE endpoint, CSRF state validation, and a loopback-only callback.
 - Opens authorization in Brave and requests only `openid`, `profile`, and `w_member_social`.
 - Encrypts the access token, expiry, scopes, and member author URN in the Windows DPAPI vault.
 - Preserves existing platform entries and creates an encrypted backup before token storage.

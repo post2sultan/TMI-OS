@@ -7,6 +7,14 @@ foreach ($path in @($module, $authorize)) {
     [Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$errors) | Out-Null
     if ($errors.Count) { throw "PowerShell syntax validation failed: $path" }
 }
+$authorizeText = Get-Content -LiteralPath $authorize -Raw
+if ($authorizeText -notmatch [regex]::Escape("/oauth/native-pkce/authorization")) {
+    throw "LinkedIn helper is not using the native PKCE authorization endpoint."
+}
+$tokenBody = [regex]::Match($authorizeText, '(?s)accessToken.*?-Body @\{(?<body>.*?)\n\s*\}').Groups['body'].Value
+if ($tokenBody -match 'client_secret') {
+    throw "Native PKCE token exchange must not transmit the client secret."
+}
 Import-Module $module -Force
 $testVault = Join-Path $Root "tmp\social-vault-08-self-test.json"
 $existing = @{ TIKTOK_REFRESH_TOKEN = ConvertTo-SecureString "preserve-me" -AsPlainText -Force }
