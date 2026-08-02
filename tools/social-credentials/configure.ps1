@@ -26,8 +26,6 @@ $platformFields = @{
     LinkedIn = [ordered]@{
         LINKEDIN_CLIENT_ID = "LinkedIn client ID"
         LINKEDIN_CLIENT_SECRET = "LinkedIn client secret"
-        LINKEDIN_ACCESS_TOKEN = "LinkedIn access token"
-        LINKEDIN_AUTHOR_URN = "LinkedIn person or organization URN"
     }
 }
 
