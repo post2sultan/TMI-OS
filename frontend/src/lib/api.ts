@@ -165,6 +165,8 @@ export const api = {
     }),
   publishInstagramStory: (campaignId: number) =>
     request<ActionResponse>(`/campaigns/${campaignId}/publishing/instagram-story`, { method: "POST" }),
+  uploadTikTokDraft: (campaignId: number) =>
+    request<ActionResponse>(`/campaigns/${campaignId}/publishing/tiktok`, { method: "POST" }),
 };
 
 export { API_BASE_URL };

@@ -16,6 +16,7 @@ from app.schemas.review import GenerateMediaRequest
 from app.schemas.review import VoicePreviewResponse
 from app.schemas.review import YouTubePublishFailure, YouTubePublishResult
 from app.schemas.review import InstagramPublishFailure, InstagramPublishResult
+from app.schemas.review import TikTokPublishFailure, TikTokPublishResult
 from app.services.analysis.review_service import ReviewService
 from app.services.campaign_lifecycle import CampaignTransitionError
 from app.services.content_package_service import ContentPackageService
@@ -284,6 +285,35 @@ def complete_instagram_story(job_id:int,request:InstagramPublishResult,database:
 def fail_instagram_story(job_id:int,request:InstagramPublishFailure,database:Session=Depends(get_db))->dict[str,str]:
     if not ReviewService(database).fail_instagram_story(job_id,request.error): raise HTTPException(status_code=404,detail="Instagram Story job not found.")
     return {"status":"failed"}
+
+
+@router.post("/campaigns/{campaign_id}/publishing/tiktok")
+def queue_tiktok_publish(campaign_id: int, database: Session = Depends(get_db)) -> dict[str, str]:
+    if not ReviewService(database).queue_tiktok_publish(campaign_id):
+        raise HTTPException(status_code=409, detail="Generated video is required.")
+    return {"status": "queued_tiktok_draft_upload"}
+
+
+@router.get("/publishing/tiktok/next")
+def next_tiktok_publish(database: Session = Depends(get_db)) -> dict:
+    job = ReviewService(database).next_tiktok_publish()
+    if job is None:
+        return {"status": "empty"}
+    return {"status": "uploading", "job_id": job.id, "campaign_id": job.campaign_id, "video_url": job.video_url}
+
+
+@router.post("/publishing/tiktok/{job_id}/complete")
+def complete_tiktok_publish(job_id: int, request: TikTokPublishResult, database: Session = Depends(get_db)) -> dict[str, str]:
+    if not ReviewService(database).complete_tiktok_publish(job_id, request.publish_id):
+        raise HTTPException(status_code=404, detail="TikTok job not found.")
+    return {"status": "uploaded_draft"}
+
+
+@router.post("/publishing/tiktok/{job_id}/fail")
+def fail_tiktok_publish(job_id: int, request: TikTokPublishFailure, database: Session = Depends(get_db)) -> dict[str, str]:
+    if not ReviewService(database).fail_tiktok_publish(job_id, request.error):
+        raise HTTPException(status_code=404, detail="TikTok job not found.")
+    return {"status": "failed"}
 
 
 @router.post(

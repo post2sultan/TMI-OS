@@ -61,6 +61,11 @@ class ContentCreationItem(BaseModel):
     instagram_story_error: str
     instagram_story_attempts: int
     instagram_story_requested_at: datetime | None
+    tiktok_status: str
+    tiktok_publish_id: str
+    tiktok_error: str
+    tiktok_attempts: int
+    tiktok_requested_at: datetime | None
 
 
 class YouTubePublishResult(BaseModel):
@@ -76,6 +81,14 @@ class InstagramPublishResult(BaseModel):
 
 
 class InstagramPublishFailure(BaseModel):
+    error: str = Field(min_length=1, max_length=2000)
+
+
+class TikTokPublishResult(BaseModel):
+    publish_id: str = Field(min_length=1, max_length=128)
+
+
+class TikTokPublishFailure(BaseModel):
     error: str = Field(min_length=1, max_length=2000)
 
 

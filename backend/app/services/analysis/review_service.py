@@ -152,6 +152,11 @@ class ReviewService:
                 "instagram_story_error": job.instagram_story_error,
                 "instagram_story_attempts": job.instagram_story_attempts,
                 "instagram_story_requested_at": job.instagram_story_requested_at,
+                "tiktok_status": job.tiktok_status,
+                "tiktok_publish_id": job.tiktok_publish_id,
+                "tiktok_error": job.tiktok_error,
+                "tiktok_attempts": job.tiktok_attempts,
+                "tiktok_requested_at": job.tiktok_requested_at,
             }
             for job, campaign in self.db.execute(statement).all()
         ]
@@ -357,6 +362,53 @@ class ReviewService:
         job=self.db.get(ContentCreationJob,job_id)
         if job is None: return False
         job.instagram_story_status="failed"; job.instagram_story_error=error[:2000]; self.db.commit(); return True
+
+    def queue_tiktok_publish(self, campaign_id: int) -> bool:
+        job = self.db.scalar(select(ContentCreationJob).where(ContentCreationJob.campaign_id == campaign_id))
+        if job is None or not job.video_url:
+            return False
+        if job.tiktok_status in {"queued", "uploading"}:
+            return True
+        job.tiktok_status = "queued"
+        job.tiktok_error = ""
+        job.tiktok_requested_at = datetime.now(timezone.utc)
+        self.db.commit()
+        return True
+
+    def next_tiktok_publish(self) -> ContentCreationJob | None:
+        stale = datetime.now(timezone.utc) - timedelta(minutes=15)
+        job = self.db.scalar(
+            select(ContentCreationJob)
+            .where(or_(ContentCreationJob.tiktok_status == "queued", (ContentCreationJob.tiktok_status == "uploading") & (ContentCreationJob.tiktok_requested_at < stale)))
+            .order_by(ContentCreationJob.tiktok_requested_at.asc())
+            .with_for_update(skip_locked=True)
+        )
+        if job is None:
+            return None
+        job.tiktok_status = "uploading"
+        job.tiktok_attempts += 1
+        self.db.commit()
+        self.db.refresh(job)
+        return job
+
+    def complete_tiktok_publish(self, job_id: int, publish_id: str) -> bool:
+        job = self.db.get(ContentCreationJob, job_id)
+        if job is None:
+            return False
+        job.tiktok_status = "uploaded_draft"
+        job.tiktok_publish_id = publish_id
+        job.tiktok_error = ""
+        self.db.commit()
+        return True
+
+    def fail_tiktok_publish(self, job_id: int, error: str) -> bool:
+        job = self.db.get(ContentCreationJob, job_id)
+        if job is None:
+            return False
+        job.tiktok_status = "failed"
+        job.tiktok_error = error[:2000]
+        self.db.commit()
+        return True
 
     def reject_analysis(
         self,

@@ -42,6 +42,11 @@ export function ApprovedPage() {
     onSuccess: async () => { toast.success("Public Instagram Story queued."); await queryClient.invalidateQueries({ queryKey: ["content-creation"] }); },
     onError: (error: Error) => toast.error(error.message),
   });
+  const uploadTikTok = useMutation({
+    mutationFn: api.uploadTikTokDraft,
+    onSuccess: async () => { toast.success("TikTok draft upload queued. Finish posting from TikTok Inbox."); await queryClient.invalidateQueries({ queryKey: ["content-creation"] }); },
+    onError: (error: Error) => toast.error(error.message),
+  });
   const generate = useMutation({
     mutationFn: api.generateContentPackage,
     onSuccess: async () => {
@@ -244,6 +249,11 @@ export function ApprovedPage() {
                     className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-800 disabled:opacity-50">
                     Publish Instagram Story (public)
                   </button>
+                  <button type="button" disabled={!job?.video_url || uploadTikTok.isPending}
+                    onClick={() => { if (window.confirm("Upload this video as a TikTok draft? You must finish posting from TikTok Inbox.")) uploadTikTok.mutate(item.campaign_id); }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
+                    Upload TikTok draft
+                  </button>
                 </div>
               </div>
               {preview.campaignId === item.campaign_id ? (
@@ -268,6 +278,12 @@ export function ApprovedPage() {
               {job?.instagram_story_status && job.instagram_story_status !== "not_queued" ? (
                 <div className="mt-3 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm text-violet-900">
                   Instagram Story: {job.instagram_story_status}{job.instagram_story_error ? ` — ${job.instagram_story_error}` : ""}
+                </div>
+              ) : null}
+              {job?.tiktok_status && job.tiktok_status !== "not_queued" ? (
+                <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900">
+                  TikTok: {job.tiktok_status}{job.tiktok_error ? ` — ${job.tiktok_error}` : ""}
+                  {job.tiktok_status === "uploaded_draft" ? " — Open TikTok Inbox to review and post." : ""}
                 </div>
               ) : null}
               {generated ? (

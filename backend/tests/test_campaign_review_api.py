@@ -124,6 +124,31 @@ class CampaignReviewServiceTests(unittest.TestCase):
         self.assertIsNotNone(job.instagram_story_requested_at)
         database.commit.assert_called_once()
 
+    def test_tiktok_requires_video_and_queues_draft_upload(self) -> None:
+        database = Mock()
+        job = SimpleNamespace(
+            video_url="/media/campaign-7/video.mp4",
+            tiktok_status="not_queued",
+            tiktok_error="old",
+            tiktok_requested_at=None,
+        )
+        database.scalar.return_value = job
+        self.assertTrue(ReviewService(database).queue_tiktok_publish(7))
+        self.assertEqual(job.tiktok_status, "queued")
+        self.assertEqual(job.tiktok_error, "")
+        self.assertIsNotNone(job.tiktok_requested_at)
+        database.commit.assert_called_once()
+
+    def test_tiktok_completion_records_draft_not_publication(self) -> None:
+        database = Mock()
+        job = SimpleNamespace(tiktok_status="uploading", tiktok_publish_id="", tiktok_error="old")
+        database.get.return_value = job
+        self.assertTrue(ReviewService(database).complete_tiktok_publish(12, "v_inbox_file~v2.test"))
+        self.assertEqual(job.tiktok_status, "uploaded_draft")
+        self.assertEqual(job.tiktok_publish_id, "v_inbox_file~v2.test")
+        self.assertEqual(job.tiktok_error, "")
+        database.commit.assert_called_once()
+
     def test_edit_creates_new_analysis_without_overwriting_original(self) -> None:
         database = Mock()
         campaign = SimpleNamespace(id=7, status="needs_review")

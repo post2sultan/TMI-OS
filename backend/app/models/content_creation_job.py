@@ -117,3 +117,8 @@ class ContentCreationJob(Base):
     instagram_story_error: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     instagram_story_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     instagram_story_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    tiktok_status: Mapped[str] = mapped_column(String(30), nullable=False, default="not_queued", server_default="not_queued")
+    tiktok_publish_id: Mapped[str] = mapped_column(String(128), nullable=False, default="", server_default="")
+    tiktok_error: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    tiktok_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    tiktok_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
