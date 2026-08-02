@@ -16,6 +16,7 @@ from app.models.audit_event import AuditEvent
 from app.models.content_creation_job import ContentCreationJob
 from app.models.discovery_signal import DiscoverySignal
 from app.models.campaign_cluster import CampaignCluster
+from app.models.radar_watchlist import RadarWatchlist
 
 __all__ = [
     "Campaign",
@@ -29,4 +30,5 @@ __all__ = [
     "ContentCreationJob",
     "DiscoverySignal",
     "CampaignCluster",
+    "RadarWatchlist",
 ]
