@@ -47,11 +47,6 @@ export function ApprovedPage() {
     onSuccess: async () => { toast.success("TikTok draft upload queued. Finish posting from TikTok Inbox."); await queryClient.invalidateQueries({ queryKey: ["content-creation"] }); },
     onError: (error: Error) => toast.error(error.message),
   });
-  const publishLinkedIn = useMutation({
-    mutationFn: api.publishLinkedInVideo,
-    onSuccess: async () => { toast.success("Public LinkedIn video queued."); await queryClient.invalidateQueries({ queryKey: ["content-creation"] }); },
-    onError: (error: Error) => toast.error(error.message),
-  });
   const generate = useMutation({
     mutationFn: api.generateContentPackage,
     onSuccess: async () => {
@@ -143,7 +138,10 @@ export function ApprovedPage() {
                   to={`/campaigns/${item.campaign_id}`}
                   className="min-w-0 break-words font-semibold text-slate-950 hover:text-blue-700"
                 >
-                  {item.campaign_title}
+                  <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-blue-700">
+                    Campaign #{item.campaign_id}
+                  </span>
+                  <span className="block">{item.campaign_title}</span>
                 </Link>
                 <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold uppercase text-emerald-800">
                   Approved
@@ -161,6 +159,19 @@ export function ApprovedPage() {
                   Content {job?.status ?? "queued"}
                 </span>
                 <div className="flex min-w-0 flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={generate.isPending}
+                    onClick={() => generate.mutate(item.campaign_id)}
+                    className="inline-flex items-center gap-2 whitespace-normal rounded-xl border border-blue-200 px-4 py-2 text-left text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-50"
+                  >
+                    {generate.isPending ? (
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileText className="h-4 w-4" />
+                    )}
+                    {generated ? "Regenerate content" : "Generate content"}
+                  </button>
                   <select
                     aria-label="Narration voice"
                     value={selectedVoice}
@@ -213,19 +224,6 @@ export function ApprovedPage() {
                   </button>
                   <button
                     type="button"
-                    disabled={generate.isPending}
-                    onClick={() => generate.mutate(item.campaign_id)}
-                    className="inline-flex items-center gap-2 whitespace-normal rounded-xl border border-blue-200 px-4 py-2 text-left text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-50"
-                  >
-                    {generate.isPending ? (
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <FileText className="h-4 w-4" />
-                    )}
-                    {generated ? "Regenerate" : "Generate content"}
-                  </button>
-                  <button
-                    type="button"
                     disabled={!generated || publish.isPending}
                     onClick={() => publish.mutate(item.campaign_id)}
                     className="inline-flex items-center gap-2 whitespace-normal rounded-xl bg-blue-700 px-4 py-2 text-left text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
@@ -258,11 +256,6 @@ export function ApprovedPage() {
                     onClick={() => { if (window.confirm("Upload this video as a TikTok draft? You must finish posting from TikTok Inbox.")) uploadTikTok.mutate(item.campaign_id); }}
                     className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
                     Upload TikTok draft
-                  </button>
-                  <button type="button" disabled={!job?.social_export_url || publishLinkedIn.isPending}
-                    onClick={() => { if (window.confirm("Publish this video publicly to the configured LinkedIn organization Page?")) publishLinkedIn.mutate(item.campaign_id); }}
-                    className="inline-flex items-center gap-2 rounded-xl bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50">
-                    Publish to LinkedIn Page (public)
                   </button>
                 </div>
               </div>
