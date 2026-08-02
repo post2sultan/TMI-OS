@@ -60,7 +60,7 @@ export function CampaignRadarPage() {
     mutationFn: api.discoverAndSave,
     onSuccess: async (result) => {
       toast.success(
-        `Discovery complete: ${result.created} created, ${result.skipped} skipped.`,
+        `Radar scan complete: ${result.created} new signals, ${result.skipped} previously seen.`,
       );
       setPrompt("");
       await queryClient.invalidateQueries({ queryKey: ["campaigns"] });

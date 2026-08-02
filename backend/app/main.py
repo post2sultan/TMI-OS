@@ -2,6 +2,7 @@
 from app.api.extraction import router as extraction_router
 from app.routers.reviews import router as reviews_router
 from app.routers.discovery_history import router as discovery_history_router
+from app.routers.radar import router as radar_router
 from collections.abc import Generator
 from datetime import datetime
 from typing import Any
@@ -61,6 +62,7 @@ app.add_middleware(RequestObservabilityMiddleware)
 app.include_router(extraction_router)
 app.include_router(reviews_router)
 app.include_router(discovery_history_router)
+app.include_router(radar_router)
 app.mount("/media", StaticFiles(directory="/app/media", check_dir=False), name="media")
 
 
