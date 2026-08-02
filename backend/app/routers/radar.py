@@ -1,82 +1,145 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.campaign_cluster import CampaignCluster
 from app.models.discovery_signal import DiscoverySignal
+from app.models.radar_watchlist import RadarWatchlist
 from app.repositories.discovery_run_repository import discovery_run_repository
 from app.services.discovery_service import discovery_service
+from app.services.radar_query_planner import QueryPlanInput, radar_query_planner
 from app.services.radar_signal_service import radar_signal_service
+from app.services.url_normalizer import normalize_url
 
 
 router = APIRouter(prefix="/radar", tags=["radar"])
 
 
 class RadarDiscoveryRequest(BaseModel):
-    prompt: str
+    prompt: str = ""
+    watchlist_id: int | None = None
+
+
+class WatchlistRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    market: str = Field(default="Saudi Arabia", min_length=1, max_length=100)
+    languages: list[str] = Field(default_factory=lambda: ["en", "ar"], max_length=4)
+    brands: list[str] = Field(default_factory=list, max_length=50)
+    competitors: list[str] = Field(default_factory=list, max_length=50)
+    categories: list[str] = Field(default_factory=list, max_length=30)
+    locations: list[str] = Field(default_factory=list, max_length=30)
+    campaign_terms: list[str] = Field(default_factory=list, max_length=50)
+    channels: list[str] = Field(default_factory=list, max_length=20)
+
+
+def _plan_input(request: RadarDiscoveryRequest, watchlist: RadarWatchlist | None) -> QueryPlanInput:
+    if watchlist is None:
+        return QueryPlanInput(brief=request.prompt)
+    return QueryPlanInput(
+        brief=request.prompt,
+        market=watchlist.market,
+        languages=watchlist.languages,
+        brands=watchlist.brands,
+        competitors=watchlist.competitors,
+        categories=watchlist.categories,
+        locations=watchlist.locations,
+        campaign_terms=watchlist.campaign_terms,
+        channels=watchlist.channels,
+    )
 
 
 @router.post("/discover", status_code=201)
-def discover_signals(
-    request: RadarDiscoveryRequest,
-    database: Session = Depends(get_db),
-) -> dict:
-    query = request.prompt.strip()
-    if not query:
-        raise HTTPException(status_code=422, detail="Discovery query cannot be empty.")
-    report = discovery_service.discover_with_report(query)
-    discovery_run_repository.persist_report(database, query, report.providers)
-    persisted = radar_signal_service.persist(database, query, report.campaigns)
+def discover_signals(request: RadarDiscoveryRequest, database: Session = Depends(get_db)) -> dict:
+    watchlist = None
+    if request.watchlist_id is not None:
+        watchlist = database.get(RadarWatchlist, request.watchlist_id)
+        if watchlist is None or not watchlist.active:
+            raise HTTPException(status_code=404, detail="Active Radar watchlist not found.")
+    queries = radar_query_planner.plan(_plan_input(request, watchlist))
+    if not queries:
+        raise HTTPException(status_code=422, detail="Discovery brief or watchlist criteria are required.")
+
+    qualified_by_url = {}
+    discovered = rejected = 0
+    rejection_reasons: dict[str, int] = {}
+    for query in queries:
+        report = discovery_service.discover_with_report(query)
+        discovery_run_repository.persist_report(database, query, report.providers)
+        discovered += report.discovered
+        rejected += report.rejected
+        for reason, count in report.rejection_reasons.items():
+            rejection_reasons[reason] = rejection_reasons.get(reason, 0) + count
+        for source in report.campaigns:
+            key = normalize_url(source.url)
+            if key:
+                qualified_by_url.setdefault(key, source)
+
+    label = request.prompt.strip() or f"watchlist:{watchlist.name}"
+    sources = list(qualified_by_url.values())
+    persisted = radar_signal_service.persist(database, label, sources)
     return {
-        "query": query,
-        "discovered": report.discovered,
-        "qualified": len(report.campaigns),
-        "rejected": report.rejected,
+        "query": label,
+        "queries_executed": queries,
+        "discovered": discovered,
+        "qualified": len(sources),
+        "rejected": rejected,
         "created": persisted.created,
         "skipped": persisted.updated,
-        "rejection_reasons": report.rejection_reasons,
+        "rejection_reasons": rejection_reasons,
         "campaign_ids": [],
         "signal_ids": persisted.signal_ids,
         "cluster_ids": sorted(set(persisted.cluster_ids)),
     }
 
 
+@router.post("/watchlists", status_code=201)
+def create_watchlist(request: WatchlistRequest, database: Session = Depends(get_db)) -> dict:
+    existing = database.scalar(select(RadarWatchlist).where(RadarWatchlist.name == request.name.strip()))
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="A watchlist with this name already exists.")
+    values = request.model_dump()
+    values["name"] = request.name.strip()
+    watchlist = RadarWatchlist(**values)
+    database.add(watchlist)
+    database.commit()
+    database.refresh(watchlist)
+    return {
+        "id": watchlist.id,
+        "name": watchlist.name,
+        "market": watchlist.market,
+        "languages": watchlist.languages,
+        "brands": watchlist.brands,
+        "competitors": watchlist.competitors,
+        "categories": watchlist.categories,
+        "locations": watchlist.locations,
+        "campaign_terms": watchlist.campaign_terms,
+        "channels": watchlist.channels,
+        "active": watchlist.active,
+        "created_at": watchlist.created_at,
+        "updated_at": watchlist.updated_at,
+    }
+
+
+@router.get("/watchlists")
+def list_watchlists(database: Session = Depends(get_db)) -> dict:
+    items = list(database.scalars(select(RadarWatchlist).order_by(RadarWatchlist.name)))
+    return {"items": items, "total": len(items)}
+
+
 @router.get("/clusters")
-def list_clusters(
-    limit: int = 50,
-    offset: int = 0,
-    database: Session = Depends(get_db),
-) -> dict:
+def list_clusters(limit: int = 50, offset: int = 0, database: Session = Depends(get_db)) -> dict:
     safe_limit = min(max(limit, 1), 200)
     safe_offset = max(offset, 0)
-    items = list(
-        database.scalars(
-            select(CampaignCluster)
-            .order_by(CampaignCluster.last_seen_at.desc(), CampaignCluster.id.desc())
-            .limit(safe_limit)
-            .offset(safe_offset)
-        )
-    )
+    items = list(database.scalars(select(CampaignCluster).order_by(CampaignCluster.last_seen_at.desc(), CampaignCluster.id.desc()).limit(safe_limit).offset(safe_offset)))
     total = database.scalar(select(func.count(CampaignCluster.id))) or 0
     return {"items": items, "total": total, "limit": safe_limit, "offset": safe_offset}
 
 
 @router.get("/clusters/{cluster_id}/signals")
-def list_cluster_signals(
-    cluster_id: int,
-    database: Session = Depends(get_db),
-) -> dict:
-    cluster = database.get(CampaignCluster, cluster_id)
-    if cluster is None:
+def list_cluster_signals(cluster_id: int, database: Session = Depends(get_db)) -> dict:
+    if database.get(CampaignCluster, cluster_id) is None:
         raise HTTPException(status_code=404, detail="Campaign cluster not found.")
-    items = list(
-        database.scalars(
-            select(DiscoverySignal)
-            .where(DiscoverySignal.cluster_id == cluster_id)
-            .order_by(DiscoverySignal.last_seen_at.desc())
-        )
-    )
+    items = list(database.scalars(select(DiscoverySignal).where(DiscoverySignal.cluster_id == cluster_id).order_by(DiscoverySignal.last_seen_at.desc())))
     return {"items": items, "total": len(items)}
-
