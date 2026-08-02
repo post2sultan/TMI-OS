@@ -101,6 +101,24 @@ def _source_dict(source: RadarSource) -> dict:
     }
 
 
+def _cluster_dict(cluster: CampaignCluster) -> dict:
+    return {
+        "id": cluster.id,
+        "title": cluster.title,
+        "normalized_title": cluster.normalized_title,
+        "status": cluster.status,
+        "signal_count": cluster.signal_count,
+        "source_count": cluster.source_count,
+        "confidence_score": cluster.confidence_score,
+        "trend_score": cluster.trend_score,
+        "matched_entities": cluster.matched_entities,
+        "score_rationale": cluster.score_rationale,
+        "score_version": cluster.score_version,
+        "first_seen_at": cluster.first_seen_at,
+        "last_seen_at": cluster.last_seen_at,
+    }
+
+
 @router.post("/discover", status_code=201)
 def discover_signals(request: RadarDiscoveryRequest, database: Session = Depends(get_db)) -> dict:
     watchlist = None
@@ -200,12 +218,29 @@ def run_monitor(request: MonitorRequest, database: Session = Depends(get_db)) ->
 
 
 @router.get("/clusters")
-def list_clusters(limit: int = 50, offset: int = 0, database: Session = Depends(get_db)) -> dict:
+def list_clusters(
+    limit: int = 50,
+    offset: int = 0,
+    status: str | None = None,
+    min_confidence: float = 0.0,
+    sort: str = "recent",
+    database: Session = Depends(get_db),
+) -> dict:
     safe_limit = min(max(limit, 1), 200)
     safe_offset = max(offset, 0)
-    items = list(database.scalars(select(CampaignCluster).order_by(CampaignCluster.last_seen_at.desc(), CampaignCluster.id.desc()).limit(safe_limit).offset(safe_offset)))
-    total = database.scalar(select(func.count(CampaignCluster.id))) or 0
-    return {"items": items, "total": total, "limit": safe_limit, "offset": safe_offset}
+    query = select(CampaignCluster).where(CampaignCluster.confidence_score >= min(max(min_confidence, 0.0), 1.0))
+    count_query = select(func.count(CampaignCluster.id)).where(CampaignCluster.confidence_score >= min(max(min_confidence, 0.0), 1.0))
+    if status:
+        query = query.where(CampaignCluster.status == status)
+        count_query = count_query.where(CampaignCluster.status == status)
+    order = (
+        (CampaignCluster.trend_score.desc(), CampaignCluster.last_seen_at.desc())
+        if sort == "trend"
+        else (CampaignCluster.last_seen_at.desc(), CampaignCluster.id.desc())
+    )
+    items = list(database.scalars(query.order_by(*order).limit(safe_limit).offset(safe_offset)))
+    total = database.scalar(count_query) or 0
+    return {"items": [_cluster_dict(item) for item in items], "total": total, "limit": safe_limit, "offset": safe_offset}
 
 
 @router.get("/clusters/{cluster_id}/signals")
