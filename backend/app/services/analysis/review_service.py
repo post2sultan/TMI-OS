@@ -157,6 +157,12 @@ class ReviewService:
                 "tiktok_error": job.tiktok_error,
                 "tiktok_attempts": job.tiktok_attempts,
                 "tiktok_requested_at": job.tiktok_requested_at,
+                "linkedin_status": job.linkedin_status,
+                "linkedin_post_urn": job.linkedin_post_urn,
+                "linkedin_video_urn": job.linkedin_video_urn,
+                "linkedin_error": job.linkedin_error,
+                "linkedin_attempts": job.linkedin_attempts,
+                "linkedin_requested_at": job.linkedin_requested_at,
             }
             for job, campaign in self.db.execute(statement).all()
         ]
@@ -407,6 +413,54 @@ class ReviewService:
             return False
         job.tiktok_status = "failed"
         job.tiktok_error = error[:2000]
+        self.db.commit()
+        return True
+
+    def queue_linkedin_publish(self, campaign_id: int) -> bool:
+        job = self.db.scalar(select(ContentCreationJob).where(ContentCreationJob.campaign_id == campaign_id))
+        if job is None or not job.social_export_url or not job.social_caption:
+            return False
+        if job.linkedin_status in {"queued", "uploading"}:
+            return True
+        job.linkedin_status = "queued"
+        job.linkedin_error = ""
+        job.linkedin_requested_at = datetime.now(timezone.utc)
+        self.db.commit()
+        return True
+
+    def next_linkedin_publish(self) -> ContentCreationJob | None:
+        stale = datetime.now(timezone.utc) - timedelta(minutes=15)
+        job = self.db.scalar(
+            select(ContentCreationJob)
+            .where(or_(ContentCreationJob.linkedin_status == "queued", (ContentCreationJob.linkedin_status == "uploading") & (ContentCreationJob.linkedin_requested_at < stale)))
+            .order_by(ContentCreationJob.linkedin_requested_at.asc())
+            .with_for_update(skip_locked=True)
+        )
+        if job is None:
+            return None
+        job.linkedin_status = "uploading"
+        job.linkedin_attempts += 1
+        self.db.commit()
+        self.db.refresh(job)
+        return job
+
+    def complete_linkedin_publish(self, job_id: int, post_urn: str, video_urn: str) -> bool:
+        job = self.db.get(ContentCreationJob, job_id)
+        if job is None:
+            return False
+        job.linkedin_status = "published"
+        job.linkedin_post_urn = post_urn
+        job.linkedin_video_urn = video_urn
+        job.linkedin_error = ""
+        self.db.commit()
+        return True
+
+    def fail_linkedin_publish(self, job_id: int, error: str) -> bool:
+        job = self.db.get(ContentCreationJob, job_id)
+        if job is None:
+            return False
+        job.linkedin_status = "failed"
+        job.linkedin_error = error[:2000]
         self.db.commit()
         return True
 
