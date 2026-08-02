@@ -149,6 +149,16 @@ class CampaignReviewServiceTests(unittest.TestCase):
         self.assertEqual(job.tiktok_error, "")
         database.commit.assert_called_once()
 
+    def test_linkedin_requires_export_and_queues_public_video(self) -> None:
+        database = Mock()
+        job = SimpleNamespace(social_export_url="/media/export.zip", social_caption="Approved", linkedin_status="not_queued", linkedin_error="old", linkedin_requested_at=None)
+        database.scalar.return_value = job
+        self.assertTrue(ReviewService(database).queue_linkedin_publish(7))
+        self.assertEqual(job.linkedin_status, "queued")
+        self.assertEqual(job.linkedin_error, "")
+        self.assertIsNotNone(job.linkedin_requested_at)
+        database.commit.assert_called_once()
+
     def test_edit_creates_new_analysis_without_overwriting_original(self) -> None:
         database = Mock()
         campaign = SimpleNamespace(id=7, status="needs_review")

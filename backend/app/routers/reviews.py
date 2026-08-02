@@ -17,6 +17,7 @@ from app.schemas.review import VoicePreviewResponse
 from app.schemas.review import YouTubePublishFailure, YouTubePublishResult
 from app.schemas.review import InstagramPublishFailure, InstagramPublishResult
 from app.schemas.review import TikTokPublishFailure, TikTokPublishResult
+from app.schemas.review import LinkedInPublishFailure, LinkedInPublishResult
 from app.services.analysis.review_service import ReviewService
 from app.services.campaign_lifecycle import CampaignTransitionError
 from app.services.content_package_service import ContentPackageService
@@ -313,6 +314,36 @@ def complete_tiktok_publish(job_id: int, request: TikTokPublishResult, database:
 def fail_tiktok_publish(job_id: int, request: TikTokPublishFailure, database: Session = Depends(get_db)) -> dict[str, str]:
     if not ReviewService(database).fail_tiktok_publish(job_id, request.error):
         raise HTTPException(status_code=404, detail="TikTok job not found.")
+    return {"status": "failed"}
+
+
+@router.post("/campaigns/{campaign_id}/publishing/linkedin")
+def queue_linkedin_publish(campaign_id: int, database: Session = Depends(get_db)) -> dict[str, str]:
+    if not ReviewService(database).queue_linkedin_publish(campaign_id):
+        raise HTTPException(status_code=409, detail="Social export and caption are required.")
+    return {"status": "queued_public_linkedin_video"}
+
+
+@router.get("/publishing/linkedin/next")
+def next_linkedin_publish(database: Session = Depends(get_db)) -> dict:
+    job = ReviewService(database).next_linkedin_publish()
+    if job is None:
+        return {"status": "empty"}
+    campaign = database.get(Campaign, job.campaign_id)
+    return {"status": "uploading", "job_id": job.id, "campaign_id": job.campaign_id, "social_export_url": job.social_export_url, "title": campaign.title[:200] if campaign else f"TMI OS Campaign {job.campaign_id}", "commentary": f"{job.social_caption}\n\n{' '.join(job.hashtags)}".strip()}
+
+
+@router.post("/publishing/linkedin/{job_id}/complete")
+def complete_linkedin_publish(job_id: int, request: LinkedInPublishResult, database: Session = Depends(get_db)) -> dict[str, str]:
+    if not ReviewService(database).complete_linkedin_publish(job_id, request.post_urn, request.video_urn):
+        raise HTTPException(status_code=404, detail="LinkedIn job not found.")
+    return {"status": "published"}
+
+
+@router.post("/publishing/linkedin/{job_id}/fail")
+def fail_linkedin_publish(job_id: int, request: LinkedInPublishFailure, database: Session = Depends(get_db)) -> dict[str, str]:
+    if not ReviewService(database).fail_linkedin_publish(job_id, request.error):
+        raise HTTPException(status_code=404, detail="LinkedIn job not found.")
     return {"status": "failed"}
 
 

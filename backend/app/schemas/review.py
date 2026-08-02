@@ -66,6 +66,12 @@ class ContentCreationItem(BaseModel):
     tiktok_error: str
     tiktok_attempts: int
     tiktok_requested_at: datetime | None
+    linkedin_status: str
+    linkedin_post_urn: str
+    linkedin_video_urn: str
+    linkedin_error: str
+    linkedin_attempts: int
+    linkedin_requested_at: datetime | None
 
 
 class YouTubePublishResult(BaseModel):
@@ -89,6 +95,15 @@ class TikTokPublishResult(BaseModel):
 
 
 class TikTokPublishFailure(BaseModel):
+    error: str = Field(min_length=1, max_length=2000)
+
+
+class LinkedInPublishResult(BaseModel):
+    post_urn: str = Field(min_length=1, max_length=160)
+    video_urn: str = Field(min_length=1, max_length=160)
+
+
+class LinkedInPublishFailure(BaseModel):
     error: str = Field(min_length=1, max_length=2000)
 
 

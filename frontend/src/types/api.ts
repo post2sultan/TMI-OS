@@ -80,6 +80,12 @@ export interface ContentCreationItem {
   tiktok_error: string;
   tiktok_attempts: number;
   tiktok_requested_at: string | null;
+  linkedin_status: string;
+  linkedin_post_urn: string;
+  linkedin_video_urn: string;
+  linkedin_error: string;
+  linkedin_attempts: number;
+  linkedin_requested_at: string | null;
 }
 
 export interface VoicePreviewResponse {

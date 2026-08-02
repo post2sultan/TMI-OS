@@ -47,6 +47,11 @@ export function ApprovedPage() {
     onSuccess: async () => { toast.success("TikTok draft upload queued. Finish posting from TikTok Inbox."); await queryClient.invalidateQueries({ queryKey: ["content-creation"] }); },
     onError: (error: Error) => toast.error(error.message),
   });
+  const publishLinkedIn = useMutation({
+    mutationFn: api.publishLinkedInVideo,
+    onSuccess: async () => { toast.success("Public LinkedIn video queued."); await queryClient.invalidateQueries({ queryKey: ["content-creation"] }); },
+    onError: (error: Error) => toast.error(error.message),
+  });
   const generate = useMutation({
     mutationFn: api.generateContentPackage,
     onSuccess: async () => {
@@ -254,6 +259,11 @@ export function ApprovedPage() {
                     className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
                     Upload TikTok draft
                   </button>
+                  <button type="button" disabled={!job?.social_export_url || publishLinkedIn.isPending}
+                    onClick={() => { if (window.confirm("Publish this video publicly to your LinkedIn member feed?")) publishLinkedIn.mutate(item.campaign_id); }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50">
+                    Publish LinkedIn video (public)
+                  </button>
                 </div>
               </div>
               {preview.campaignId === item.campaign_id ? (
@@ -284,6 +294,11 @@ export function ApprovedPage() {
                 <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900">
                   TikTok: {job.tiktok_status}{job.tiktok_error ? ` — ${job.tiktok_error}` : ""}
                   {job.tiktok_status === "uploaded_draft" ? " — Open TikTok Inbox to review and post." : ""}
+                </div>
+              ) : null}
+              {job?.linkedin_status && job.linkedin_status !== "not_queued" ? (
+                <div className="mt-3 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+                  LinkedIn: {job.linkedin_status}{job.linkedin_error ? ` — ${job.linkedin_error}` : ""}
                 </div>
               ) : null}
               {generated ? (
