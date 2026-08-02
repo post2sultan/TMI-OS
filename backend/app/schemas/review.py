@@ -56,6 +56,11 @@ class ContentCreationItem(BaseModel):
     instagram_error: str
     instagram_attempts: int
     instagram_requested_at: datetime | None
+    instagram_story_status: str
+    instagram_story_media_id: str
+    instagram_story_error: str
+    instagram_story_attempts: int
+    instagram_story_requested_at: datetime | None
 
 
 class YouTubePublishResult(BaseModel):
