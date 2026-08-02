@@ -79,7 +79,7 @@ export const api = {
     }),
 
   discoverAndSave: (prompt: string) =>
-    request<DiscoverySaveResponse>("/discover/save", {
+    request<DiscoverySaveResponse>("/radar/discover", {
       method: "POST",
       body: JSON.stringify({ prompt }),
     }),
