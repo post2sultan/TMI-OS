@@ -260,9 +260,9 @@ export function ApprovedPage() {
                     Upload TikTok draft
                   </button>
                   <button type="button" disabled={!job?.social_export_url || publishLinkedIn.isPending}
-                    onClick={() => { if (window.confirm("Publish this video publicly to your LinkedIn member feed?")) publishLinkedIn.mutate(item.campaign_id); }}
+                    onClick={() => { if (window.confirm("Publish this video publicly to the configured LinkedIn organization Page?")) publishLinkedIn.mutate(item.campaign_id); }}
                     className="inline-flex items-center gap-2 rounded-xl bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-50">
-                    Publish LinkedIn video (public)
+                    Publish to LinkedIn Page (public)
                   </button>
                 </div>
               </div>

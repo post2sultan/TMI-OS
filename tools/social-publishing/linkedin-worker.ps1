@@ -4,6 +4,8 @@ Import-Module (Join-Path $Root "tools\social-credentials\SocialCredentialVault.p
 $vaultPath=Join-Path $Root "docker\.env.social.vault.json";$required=@("LINKEDIN_ACCESS_TOKEN","LINKEDIN_AUTHOR_URN")
 Test-TmiSocialVault -Path $vaultPath -RequiredKeys $required|Out-Null;$vault=Get-Content $vaultPath -Raw|ConvertFrom-Json
 function Secret([string]$name){Unprotect-TmiSecret $vault.values.$name}
+$configuredAuthor=Secret "LINKEDIN_AUTHOR_URN"
+if($configuredAuthor -notlike "urn:li:organization:*"){throw "LinkedIn publishing is blocked: an organization Page author URN is required."}
 $envPath=Join-Path $Root "docker\.env.production.local";$user=((Get-Content $envPath|Where-Object{$_ -match '^TMI_WEB_USER='})-split '=',2)[1]
 $pass=((Get-Content "$envPath.access.txt"|Where-Object{$_ -match '^One-time TMI web password:'})-split ':',2)[1].Trim();$basic=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("${user}:${pass}"));$localHeaders=@{Authorization="Basic $basic"}
 $job=Invoke-RestMethod "$BaseUrl/api/publishing/linkedin/next" -Headers $localHeaders;if($job.status -eq "empty"){Write-Host "No LinkedIn publish job is queued.";exit 0}
@@ -12,7 +14,7 @@ function Report([string]$path,[hashtable]$body){Invoke-RestMethod -Method Post "
 try {
   $zip=Join-Path $temp "social.zip";Invoke-WebRequest "$BaseUrl$($job.social_export_url)" -Headers $localHeaders -OutFile $zip;Expand-Archive $zip -DestinationPath $temp -Force
   $video=Join-Path $temp "linkedin\post.mp4";$size=(Get-Item $video).Length;if($size -lt 10000){throw "LinkedIn video is invalid."}
-  $token=Secret "LINKEDIN_ACCESS_TOKEN";$author=Secret "LINKEDIN_AUTHOR_URN";$apiHeaders=@{Authorization="Bearer $token";"LinkedIn-Version"="202607";"X-Restli-Protocol-Version"="2.0.0"}
+  $token=Secret "LINKEDIN_ACCESS_TOKEN";$author=$configuredAuthor;$apiHeaders=@{Authorization="Bearer $token";"LinkedIn-Version"="202607";"X-Restli-Protocol-Version"="2.0.0"}
   $initBody=@{initializeUploadRequest=@{owner=$author;fileSizeBytes=$size;uploadCaptions=$false;uploadThumbnail=$false}}|ConvertTo-Json -Depth 5 -Compress
   $init=Invoke-RestMethod -Method Post 'https://api.linkedin.com/rest/videos?action=initializeUpload' -Headers $apiHeaders -ContentType 'application/json' -Body $initBody
   $instructions=@($init.value.uploadInstructions);if($instructions.Count -ne 1){throw "LinkedIn MVP requires a single-part video upload."};$videoUrn=[string]$init.value.video;if(-not $videoUrn){throw "LinkedIn did not return a video URN."}
