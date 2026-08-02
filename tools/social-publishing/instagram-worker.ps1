@@ -18,7 +18,14 @@ $fileName=([guid]::NewGuid().ToString("N")+".mp4"); $file=Join-Path $temp $fileN
 $serverJob=$null; $tunnel=$null
 function Report([string]$path,[hashtable]$body){Invoke-RestMethod -Method Post "$BaseUrl/api/publishing/$segment/$($job.job_id)/$path" -Headers $localHeaders -ContentType "application/json" -Body ($body|ConvertTo-Json -Compress)|Out-Null}
 try {
-  Invoke-WebRequest "$BaseUrl$($job.video_url)" -Headers $localHeaders -OutFile $file
+  $sourceUrl=[string]$job.video_url
+  if($Story){
+    $source="/app/media/campaign-$($job.campaign_id)/video.mp4"; $story="/app/media/campaign-$($job.campaign_id)/instagram-story-59s.mp4"
+    & docker exec tmi-production-backend-1 ffmpeg -y -i $source -t 59 -c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -movflags +faststart $story 2>$null
+    if($LASTEXITCODE -ne 0){throw "Could not create the Instagram Story duration-safe copy."}
+    $sourceUrl="/api/media/campaign-$($job.campaign_id)/instagram-story-59s.mp4"
+  }
+  Invoke-WebRequest "$BaseUrl$sourceUrl" -Headers $localHeaders -OutFile $file
   if((Get-Item $file).Length -lt 10000){throw "Generated video is invalid."}
   $probe=[Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,0); $probe.Start(); $port=([Net.IPEndPoint]$probe.LocalEndpoint).Port; $probe.Stop()
   $serverJob=Start-Job -ArgumentList $port,$fileName,$file -ScriptBlock {param($p,$name,$path); $l=[Net.HttpListener]::new(); $l.Prefixes.Add("http://127.0.0.1:$p/"); $l.Start(); try {while($true){$c=$l.GetContext(); if($c.Request.Url.AbsolutePath -ne "/$name"){$c.Response.StatusCode=404;$c.Response.Close();continue}; $bytes=[IO.File]::ReadAllBytes($path); $c.Response.ContentType="video/mp4";$c.Response.ContentLength64=$bytes.Length;$c.Response.OutputStream.Write($bytes,0,$bytes.Length);$c.Response.Close()}}finally{$l.Stop()}}
