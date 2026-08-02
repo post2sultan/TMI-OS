@@ -106,3 +106,9 @@ class ContentCreationJob(Base):
     youtube_requested_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    instagram_status: Mapped[str] = mapped_column(String(30), nullable=False, default="not_queued", server_default="not_queued")
+    instagram_media_id: Mapped[str] = mapped_column(String(64), nullable=False, default="", server_default="")
+    instagram_url: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    instagram_error: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    instagram_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    instagram_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

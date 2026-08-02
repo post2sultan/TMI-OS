@@ -64,6 +64,12 @@ export interface ContentCreationItem {
   youtube_error: string;
   youtube_attempts: number;
   youtube_requested_at: string | null;
+  instagram_status: string;
+  instagram_media_id: string;
+  instagram_url: string;
+  instagram_error: string;
+  instagram_attempts: number;
+  instagram_requested_at: string | null;
 }
 
 export interface VoicePreviewResponse {
