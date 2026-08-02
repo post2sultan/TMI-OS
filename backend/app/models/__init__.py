@@ -17,6 +17,7 @@ from app.models.content_creation_job import ContentCreationJob
 from app.models.discovery_signal import DiscoverySignal
 from app.models.campaign_cluster import CampaignCluster
 from app.models.radar_watchlist import RadarWatchlist
+from app.models.radar_source import RadarSource
 
 __all__ = [
     "Campaign",
@@ -31,4 +32,5 @@ __all__ = [
     "DiscoverySignal",
     "CampaignCluster",
     "RadarWatchlist",
+    "RadarSource",
 ]

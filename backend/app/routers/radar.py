@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
@@ -7,10 +9,12 @@ from app.core.database import get_db
 from app.models.campaign_cluster import CampaignCluster
 from app.models.discovery_signal import DiscoverySignal
 from app.models.radar_watchlist import RadarWatchlist
+from app.models.radar_source import RadarSource
 from app.repositories.discovery_run_repository import discovery_run_repository
 from app.services.discovery_service import discovery_service
 from app.services.radar_query_planner import QueryPlanInput, radar_query_planner
 from app.services.radar_signal_service import radar_signal_service
+from app.services.radar_source_monitor import radar_source_monitor
 from app.services.url_normalizer import normalize_url
 
 
@@ -32,6 +36,18 @@ class WatchlistRequest(BaseModel):
     locations: list[str] = Field(default_factory=list, max_length=30)
     campaign_terms: list[str] = Field(default_factory=list, max_length=50)
     channels: list[str] = Field(default_factory=list, max_length=20)
+
+
+class RadarSourceRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    source_type: str = Field(pattern="^(rss|atom|sitemap)$")
+    url: str = Field(min_length=8, max_length=2000, pattern="^https?://")
+    query: str = Field(default="", max_length=300)
+    poll_interval_minutes: int = Field(default=60, ge=15, le=10080)
+
+
+class MonitorRequest(BaseModel):
+    force: bool = False
 
 
 def _plan_input(request: RadarDiscoveryRequest, watchlist: RadarWatchlist | None) -> QueryPlanInput:
@@ -65,6 +81,23 @@ def _watchlist_dict(watchlist: RadarWatchlist) -> dict:
         "active": watchlist.active,
         "created_at": watchlist.created_at,
         "updated_at": watchlist.updated_at,
+    }
+
+
+def _source_dict(source: RadarSource) -> dict:
+    return {
+        "id": source.id,
+        "name": source.name,
+        "source_type": source.source_type,
+        "url": source.url,
+        "query": source.query,
+        "enabled": source.enabled,
+        "poll_interval_minutes": source.poll_interval_minutes,
+        "last_polled_at": source.last_polled_at,
+        "next_poll_at": source.next_poll_at,
+        "last_status": source.last_status,
+        "last_error": source.last_error,
+        "last_results": source.last_results,
     }
 
 
@@ -130,6 +163,40 @@ def create_watchlist(request: WatchlistRequest, database: Session = Depends(get_
 def list_watchlists(database: Session = Depends(get_db)) -> dict:
     items = list(database.scalars(select(RadarWatchlist).order_by(RadarWatchlist.name)))
     return {"items": [_watchlist_dict(item) for item in items], "total": len(items)}
+
+
+@router.post("/sources", status_code=201)
+def create_source(request: RadarSourceRequest, database: Session = Depends(get_db)) -> dict:
+    existing = database.scalar(select(RadarSource).where((RadarSource.name == request.name.strip()) | (RadarSource.url == request.url.strip())))
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="A Radar source with this name or URL already exists.")
+    source = RadarSource(**request.model_dump())
+    source.name = source.name.strip()
+    source.url = source.url.strip()
+    database.add(source)
+    database.commit()
+    database.refresh(source)
+    return _source_dict(source)
+
+
+@router.get("/sources")
+def list_sources(database: Session = Depends(get_db)) -> dict:
+    items = list(database.scalars(select(RadarSource).order_by(RadarSource.name)))
+    return {"items": [_source_dict(item) for item in items], "total": len(items)}
+
+
+@router.post("/monitor/run")
+def run_monitor(request: MonitorRequest, database: Session = Depends(get_db)) -> dict:
+    results = radar_source_monitor.run(database, force=request.force)
+    return {
+        "sources_polled": len(results),
+        "healthy": sum(item.status == "healthy" for item in results),
+        "failed": sum(item.status == "error" for item in results),
+        "created": sum(item.created for item in results),
+        "updated": sum(item.updated for item in results),
+        "items": [asdict(item) for item in results],
+        "campaign_ids": [],
+    }
 
 
 @router.get("/clusters")
