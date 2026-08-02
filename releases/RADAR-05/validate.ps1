@@ -6,6 +6,7 @@ if (-not $planner.Contains("DEFAULT_ARABIC_TERMS") -or -not $planner.Contains("D
 if (-not $planner.Contains("min(max(max_queries, 1), 12)")) { throw "Query expansion ceiling is missing." }
 if (-not $planner.Contains("priority_terms")) { throw "Bilingual query priority guard is missing." }
 if (-not $router.Contains('/watchlists') -or -not $router.Contains("queries_executed")) { throw "Watchlist API or query telemetry is missing." }
+if (-not $router.Contains("_watchlist_dict")) { throw "Watchlist serialization guard is missing." }
 if (-not $SourceOnly) {
     $backend = docker inspect tmi-production-backend-1 --format '{{.State.Health.Status}}'
     if ($backend -ne "healthy") { throw "Production backend is not healthy." }

@@ -50,6 +50,24 @@ def _plan_input(request: RadarDiscoveryRequest, watchlist: RadarWatchlist | None
     )
 
 
+def _watchlist_dict(watchlist: RadarWatchlist) -> dict:
+    return {
+        "id": watchlist.id,
+        "name": watchlist.name,
+        "market": watchlist.market,
+        "languages": watchlist.languages,
+        "brands": watchlist.brands,
+        "competitors": watchlist.competitors,
+        "categories": watchlist.categories,
+        "locations": watchlist.locations,
+        "campaign_terms": watchlist.campaign_terms,
+        "channels": watchlist.channels,
+        "active": watchlist.active,
+        "created_at": watchlist.created_at,
+        "updated_at": watchlist.updated_at,
+    }
+
+
 @router.post("/discover", status_code=201)
 def discover_signals(request: RadarDiscoveryRequest, database: Session = Depends(get_db)) -> dict:
     watchlist = None
@@ -105,27 +123,13 @@ def create_watchlist(request: WatchlistRequest, database: Session = Depends(get_
     database.add(watchlist)
     database.commit()
     database.refresh(watchlist)
-    return {
-        "id": watchlist.id,
-        "name": watchlist.name,
-        "market": watchlist.market,
-        "languages": watchlist.languages,
-        "brands": watchlist.brands,
-        "competitors": watchlist.competitors,
-        "categories": watchlist.categories,
-        "locations": watchlist.locations,
-        "campaign_terms": watchlist.campaign_terms,
-        "channels": watchlist.channels,
-        "active": watchlist.active,
-        "created_at": watchlist.created_at,
-        "updated_at": watchlist.updated_at,
-    }
+    return _watchlist_dict(watchlist)
 
 
 @router.get("/watchlists")
 def list_watchlists(database: Session = Depends(get_db)) -> dict:
     items = list(database.scalars(select(RadarWatchlist).order_by(RadarWatchlist.name)))
-    return {"items": items, "total": len(items)}
+    return {"items": [_watchlist_dict(item) for item in items], "total": len(items)}
 
 
 @router.get("/clusters")
