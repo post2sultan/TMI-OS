@@ -5,7 +5,7 @@ $signalService = Get-Content -LiteralPath (Join-Path $Root "backend\app\services
 $router = Get-Content -LiteralPath (Join-Path $Root "backend\app\routers\radar.py") -Raw
 if (-not $intelligence.Contains("title_similarity") -or -not $intelligence.Contains("extract_known_entities") -or -not $intelligence.Contains("score_cluster")) { throw "Radar local intelligence functions are incomplete." }
 if (-not $signalService.Contains("similarity_threshold = 0.62") -or -not $signalService.Contains("candidate_scan_limit = 250")) { throw "Local clustering safety bounds are missing." }
-if (-not $router.Contains('sort == "trend"') -or -not $router.Contains("min_confidence")) { throw "Ranked candidate API is incomplete." }
+if (-not $router.Contains('sort == "trend"') -or -not $router.Contains("min_confidence") -or -not $router.Contains("_cluster_dict")) { throw "Ranked candidate API or serialization guard is incomplete." }
 if (-not $SourceOnly) {
     $backend = docker inspect tmi-production-backend-1 --format '{{.State.Health.Status}}'
     if ($backend -ne "healthy") { throw "Production backend is not healthy." }

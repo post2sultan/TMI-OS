@@ -101,6 +101,24 @@ def _source_dict(source: RadarSource) -> dict:
     }
 
 
+def _cluster_dict(cluster: CampaignCluster) -> dict:
+    return {
+        "id": cluster.id,
+        "title": cluster.title,
+        "normalized_title": cluster.normalized_title,
+        "status": cluster.status,
+        "signal_count": cluster.signal_count,
+        "source_count": cluster.source_count,
+        "confidence_score": cluster.confidence_score,
+        "trend_score": cluster.trend_score,
+        "matched_entities": cluster.matched_entities,
+        "score_rationale": cluster.score_rationale,
+        "score_version": cluster.score_version,
+        "first_seen_at": cluster.first_seen_at,
+        "last_seen_at": cluster.last_seen_at,
+    }
+
+
 @router.post("/discover", status_code=201)
 def discover_signals(request: RadarDiscoveryRequest, database: Session = Depends(get_db)) -> dict:
     watchlist = None
@@ -222,7 +240,7 @@ def list_clusters(
     )
     items = list(database.scalars(query.order_by(*order).limit(safe_limit).offset(safe_offset)))
     total = database.scalar(count_query) or 0
-    return {"items": items, "total": total, "limit": safe_limit, "offset": safe_offset}
+    return {"items": [_cluster_dict(item) for item in items], "total": total, "limit": safe_limit, "offset": safe_offset}
 
 
 @router.get("/clusters/{cluster_id}/signals")
