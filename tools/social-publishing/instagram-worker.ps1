@@ -22,7 +22,7 @@ try {
   if($Story){
     $source="/app/media/campaign-$($job.campaign_id)/video.mp4"; $storyPath="/app/media/campaign-$($job.campaign_id)/instagram-story-59s.mp4"
     $nativeErrorPreference=$ErrorActionPreference; $ErrorActionPreference="Continue"
-    & docker exec tmi-production-backend-1 ffmpeg -y -loglevel error -i $source -t 59 -c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -movflags +faststart $storyPath 2>$null
+    & docker exec tmi-production-backend-1 ffmpeg -y -loglevel error -i $source -t 59 -c:v libx264 -preset veryfast -crf 23 -c:a aac -b:a 128k -ar 48000 -ac 2 -movflags +faststart $storyPath 2>$null
     $ffmpegExitCode=$LASTEXITCODE; $ErrorActionPreference=$nativeErrorPreference
     if($ffmpegExitCode -ne 0){throw "Could not create the Instagram Story duration-safe copy."}
     $sourceUrl="/api/media/campaign-$($job.campaign_id)/instagram-story-59s.mp4"
