@@ -4,6 +4,7 @@ $planner = Get-Content -LiteralPath (Join-Path $Root "backend\app\services\radar
 $router = Get-Content -LiteralPath (Join-Path $Root "backend\app\routers\radar.py") -Raw
 if (-not $planner.Contains("DEFAULT_ARABIC_TERMS") -or -not $planner.Contains("DEFAULT_ENGLISH_TERMS")) { throw "Bilingual query planning is incomplete." }
 if (-not $planner.Contains("min(max(max_queries, 1), 12)")) { throw "Query expansion ceiling is missing." }
+if (-not $planner.Contains("priority_terms")) { throw "Bilingual query priority guard is missing." }
 if (-not $router.Contains('/watchlists') -or -not $router.Contains("queries_executed")) { throw "Watchlist API or query telemetry is missing." }
 if (-not $SourceOnly) {
     $backend = docker inspect tmi-production-backend-1 --format '{{.State.Health.Status}}'

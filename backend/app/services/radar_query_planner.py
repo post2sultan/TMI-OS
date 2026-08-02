@@ -61,7 +61,16 @@ class RadarQueryPlanner:
             defaults.extend(DEFAULT_ENGLISH_TERMS)
         elif "ar" in languages:
             defaults.extend(DEFAULT_ARABIC_TERMS)
-        terms = _clean_many(custom_terms + defaults, 8)
+        if "en" in languages and "ar" in languages:
+            priority_terms = (
+                custom_terms[:1]
+                + [DEFAULT_ENGLISH_TERMS[0], DEFAULT_ARABIC_TERMS[0]]
+                + custom_terms[1:]
+                + defaults[2:]
+            )
+        else:
+            priority_terms = custom_terms + defaults
+        terms = _clean_many(priority_terms, 8)
 
         candidates: list[str] = []
         if brief:

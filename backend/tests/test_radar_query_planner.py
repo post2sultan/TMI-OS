@@ -14,8 +14,9 @@ class RadarQueryPlannerTests(unittest.TestCase):
         self.assertTrue(any("حملة" in query for query in queries))
 
     def test_watchlist_combines_entities_terms_and_market(self) -> None:
-        queries = self.planner.plan(QueryPlanInput(brands=["Brand A"], locations=["Riyadh"]))
+        queries = self.planner.plan(QueryPlanInput(brands=["Brand A"], locations=["Riyadh"], campaign_terms=["launch", "activation"]))
         self.assertTrue(any("Brand A" in query and "Riyadh" in query for query in queries))
+        self.assertTrue(any("حملة" in query for query in queries))
 
     def test_duplicate_inputs_do_not_duplicate_queries(self) -> None:
         queries = self.planner.plan(QueryPlanInput(brands=["Brand A", "brand a"], campaign_terms=["launch", "launch"]))
