@@ -58,6 +58,12 @@ export interface ContentCreationItem {
   voice_name: string;
   social_export_url: string;
   exported_at: string | null;
+  youtube_status: string;
+  youtube_video_id: string;
+  youtube_url: string;
+  youtube_error: string;
+  youtube_attempts: number;
+  youtube_requested_at: string | null;
 }
 
 export interface VoicePreviewResponse {

@@ -22,7 +22,7 @@ export function ApprovedPage() {
   const publish = useMutation({
     mutationFn: api.publishCampaign,
     onSuccess: async () => {
-      toast.success("Campaign published.");
+      toast.success("Private YouTube upload queued.");
       await queryClient.invalidateQueries({ queryKey: ["reviews"] });
       await queryClient.invalidateQueries({ queryKey: ["content-creation"] });
       await queryClient.invalidateQueries({ queryKey: ["campaigns"] });
@@ -212,7 +212,7 @@ export function ApprovedPage() {
                     ) : (
                       <Send className="h-4 w-4" />
                     )}
-                    Publish
+                    Queue private YouTube upload
                   </button>
                 </div>
               </div>
@@ -223,6 +223,12 @@ export function ApprovedPage() {
                   autoPlay
                   src={preview.url}
                 />
+              ) : null}
+              {job?.youtube_status && job.youtube_status !== "not_queued" ? (
+                <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                  YouTube: {job.youtube_status}
+                  {job.youtube_error ? ` — ${job.youtube_error}` : ""}
+                </div>
               ) : null}
               {generated ? (
                 <div className="mt-4 space-y-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-700">

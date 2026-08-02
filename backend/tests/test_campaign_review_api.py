@@ -35,7 +35,7 @@ class CampaignReviewServiceTests(unittest.TestCase):
         self.assertEqual(queued.status, "queued")
         database.commit.assert_called_once()
 
-    def test_publish_moves_approved_campaign_and_content_job(self) -> None:
+    def test_publish_queues_private_youtube_job(self) -> None:
         database = Mock()
         campaign = SimpleNamespace(id=7, status="approved")
         analysis = SimpleNamespace(id=10, review_status="approved")
@@ -45,6 +45,9 @@ class CampaignReviewServiceTests(unittest.TestCase):
             video_script="Complete video script",
             social_caption="Complete social caption",
             video_url="/media/campaign-7/video.mp4",
+            youtube_status="not_queued",
+            youtube_error="old",
+            youtube_requested_at=None,
         )
         database.scalar.return_value = job
         service = ReviewService(database)
@@ -53,9 +56,39 @@ class CampaignReviewServiceTests(unittest.TestCase):
 
         self.assertTrue(service.publish_campaign(7))
 
+        self.assertEqual(campaign.status, "approved")
+        self.assertEqual(job.status, "generated")
+        self.assertEqual(job.youtube_status, "queued")
+        self.assertEqual(job.youtube_error, "")
+        self.assertIsNotNone(job.youtube_requested_at)
+        database.commit.assert_called_once()
+
+    def test_complete_youtube_publish_is_the_only_success_transition(self) -> None:
+        database = Mock()
+        campaign = SimpleNamespace(id=7, status="approved")
+        job = SimpleNamespace(
+            id=12,
+            campaign_id=7,
+            youtube_status="uploading",
+            youtube_video_id="",
+            youtube_url="",
+            youtube_error="",
+            status="generated",
+            published_at=None,
+        )
+        database.get.return_value = job
+        service = ReviewService(database)
+        service._get_campaign = Mock(return_value=campaign)
+
+        self.assertTrue(service.complete_youtube_publish(12, "private-video-id"))
+
         self.assertEqual(campaign.status, "published")
-        self.assertEqual(job.status, "published")
-        self.assertIsNotNone(job.published_at)
+        self.assertEqual(job.youtube_status, "published")
+        self.assertEqual(job.youtube_video_id, "private-video-id")
+        self.assertEqual(
+            job.youtube_url,
+            "https://www.youtube.com/watch?v=private-video-id",
+        )
         database.commit.assert_called_once()
 
     def test_edit_creates_new_analysis_without_overwriting_original(self) -> None:

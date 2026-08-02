@@ -44,6 +44,20 @@ class ContentCreationItem(BaseModel):
     voice_name: str
     social_export_url: str
     exported_at: datetime | None
+    youtube_status: str
+    youtube_video_id: str
+    youtube_url: str
+    youtube_error: str
+    youtube_attempts: int
+    youtube_requested_at: datetime | None
+
+
+class YouTubePublishResult(BaseModel):
+    video_id: str = Field(min_length=1, max_length=64)
+
+
+class YouTubePublishFailure(BaseModel):
+    error: str = Field(min_length=1, max_length=2000)
 
 
 class GenerateMediaRequest(BaseModel):

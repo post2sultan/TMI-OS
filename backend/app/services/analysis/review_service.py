@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
 from typing import Any
 
 from sqlalchemy import func
+from sqlalchemy import or_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -133,6 +135,12 @@ class ReviewService:
                 "voice_name": job.voice_name,
                 "social_export_url": job.social_export_url,
                 "exported_at": job.exported_at,
+                "youtube_status": job.youtube_status,
+                "youtube_video_id": job.youtube_video_id,
+                "youtube_url": job.youtube_url,
+                "youtube_error": job.youtube_error,
+                "youtube_attempts": job.youtube_attempts,
+                "youtube_requested_at": job.youtube_requested_at,
             }
             for job, campaign in self.db.execute(statement).all()
         ]
@@ -211,12 +219,62 @@ class ReviewService:
             or not job.video_url.strip()
         ):
             return False
-        campaign_lifecycle.transition(campaign, "published")
-        job.status = "published"
-        job.published_at = datetime.now(timezone.utc)
+        if job.youtube_status in {"queued", "uploading"}:
+            return True
+        job.youtube_status = "queued"
+        job.youtube_error = ""
+        job.youtube_requested_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(campaign)
         self.db.refresh(job)
+        return True
+
+    def next_youtube_publish(self) -> ContentCreationJob | None:
+        stale_before = datetime.now(timezone.utc) - timedelta(minutes=15)
+        job = self.db.scalar(
+            select(ContentCreationJob)
+            .where(
+                or_(
+                    ContentCreationJob.youtube_status == "queued",
+                    (ContentCreationJob.youtube_status == "uploading")
+                    & (ContentCreationJob.youtube_requested_at < stale_before),
+                )
+            )
+            .order_by(ContentCreationJob.youtube_requested_at.asc())
+            .with_for_update(skip_locked=True)
+        )
+        if job is None:
+            return None
+        job.youtube_status = "uploading"
+        job.youtube_attempts += 1
+        self.db.commit()
+        self.db.refresh(job)
+        return job
+
+    def complete_youtube_publish(self, job_id: int, video_id: str) -> bool:
+        job = self.db.get(ContentCreationJob, job_id)
+        if job is None or job.youtube_status not in {"uploading", "queued"}:
+            return False
+        campaign = self._get_campaign(job.campaign_id)
+        if campaign is None:
+            return False
+        job.youtube_status = "published"
+        job.youtube_video_id = video_id
+        job.youtube_url = f"https://www.youtube.com/watch?v={video_id}"
+        job.youtube_error = ""
+        job.status = "published"
+        job.published_at = datetime.now(timezone.utc)
+        campaign_lifecycle.transition(campaign, "published")
+        self.db.commit()
+        return True
+
+    def fail_youtube_publish(self, job_id: int, error: str) -> bool:
+        job = self.db.get(ContentCreationJob, job_id)
+        if job is None:
+            return False
+        job.youtube_status = "failed"
+        job.youtube_error = error[:2000]
+        self.db.commit()
         return True
 
     def reject_analysis(

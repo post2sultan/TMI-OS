@@ -88,3 +88,21 @@ class ContentCreationJob(Base):
     exported_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    youtube_status: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="not_queued", server_default="not_queued"
+    )
+    youtube_video_id: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="", server_default=""
+    )
+    youtube_url: Mapped[str] = mapped_column(
+        Text, nullable=False, default="", server_default=""
+    )
+    youtube_error: Mapped[str] = mapped_column(
+        Text, nullable=False, default="", server_default=""
+    )
+    youtube_attempts: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    youtube_requested_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )

@@ -14,11 +14,13 @@ from app.schemas.review import ReviewList
 from app.schemas.review import ContentCreationList
 from app.schemas.review import GenerateMediaRequest
 from app.schemas.review import VoicePreviewResponse
+from app.schemas.review import YouTubePublishFailure, YouTubePublishResult
 from app.services.analysis.review_service import ReviewService
 from app.services.campaign_lifecycle import CampaignTransitionError
 from app.services.content_package_service import ContentPackageService
 from app.services.local_video_service import LocalVideoService
 from app.services.social_export_service import SocialExportService
+from app.models.campaign import Campaign
 
 
 router = APIRouter(
@@ -199,7 +201,38 @@ def publish_campaign(
                 "before publishing."
             ),
         )
-    return {"status": "published"}
+    return {"status": "queued_private_youtube_upload"}
+
+
+@router.get("/publishing/youtube/next")
+def next_youtube_publish(database: Session = Depends(get_db)) -> dict:
+    job = ReviewService(database).next_youtube_publish()
+    if job is None:
+        return {"status": "empty"}
+    campaign = database.get(Campaign, job.campaign_id)
+    return {
+        "status": "uploading",
+        "job_id": job.id,
+        "campaign_id": job.campaign_id,
+        "video_url": job.video_url,
+        "title": campaign.title[:100] if campaign else f"TMI OS Campaign {job.campaign_id}",
+        "description": f"{job.social_caption}\n\n{' '.join(job.hashtags)}".strip(),
+        "privacy_status": "private",
+    }
+
+
+@router.post("/publishing/youtube/{job_id}/complete")
+def complete_youtube_publish(job_id: int, request: YouTubePublishResult, database: Session = Depends(get_db)) -> dict[str, str]:
+    if not ReviewService(database).complete_youtube_publish(job_id, request.video_id):
+        raise HTTPException(status_code=409, detail="YouTube publishing job cannot be completed.")
+    return {"status": "published_private"}
+
+
+@router.post("/publishing/youtube/{job_id}/fail")
+def fail_youtube_publish(job_id: int, request: YouTubePublishFailure, database: Session = Depends(get_db)) -> dict[str, str]:
+    if not ReviewService(database).fail_youtube_publish(job_id, request.error):
+        raise HTTPException(status_code=404, detail="YouTube publishing job was not found.")
+    return {"status": "failed"}
 
 
 @router.post(
