@@ -50,6 +50,12 @@ class ContentCreationItem(BaseModel):
     youtube_error: str
     youtube_attempts: int
     youtube_requested_at: datetime | None
+    instagram_status: str
+    instagram_media_id: str
+    instagram_url: str
+    instagram_error: str
+    instagram_attempts: int
+    instagram_requested_at: datetime | None
 
 
 class YouTubePublishResult(BaseModel):
@@ -57,6 +63,14 @@ class YouTubePublishResult(BaseModel):
 
 
 class YouTubePublishFailure(BaseModel):
+    error: str = Field(min_length=1, max_length=2000)
+
+
+class InstagramPublishResult(BaseModel):
+    media_id: str = Field(min_length=1, max_length=64)
+
+
+class InstagramPublishFailure(BaseModel):
     error: str = Field(min_length=1, max_length=2000)
 
 

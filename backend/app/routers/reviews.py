@@ -15,6 +15,7 @@ from app.schemas.review import ContentCreationList
 from app.schemas.review import GenerateMediaRequest
 from app.schemas.review import VoicePreviewResponse
 from app.schemas.review import YouTubePublishFailure, YouTubePublishResult
+from app.schemas.review import InstagramPublishFailure, InstagramPublishResult
 from app.services.analysis.review_service import ReviewService
 from app.services.campaign_lifecycle import CampaignTransitionError
 from app.services.content_package_service import ContentPackageService
@@ -232,6 +233,35 @@ def complete_youtube_publish(job_id: int, request: YouTubePublishResult, databas
 def fail_youtube_publish(job_id: int, request: YouTubePublishFailure, database: Session = Depends(get_db)) -> dict[str, str]:
     if not ReviewService(database).fail_youtube_publish(job_id, request.error):
         raise HTTPException(status_code=404, detail="YouTube publishing job was not found.")
+    return {"status": "failed"}
+
+
+@router.post("/campaigns/{campaign_id}/publishing/instagram")
+def queue_instagram_publish(campaign_id: int, database: Session = Depends(get_db)) -> dict[str, str]:
+    if not ReviewService(database).queue_instagram_publish(campaign_id):
+        raise HTTPException(status_code=409, detail="Generated video and caption are required.")
+    return {"status": "queued_public_instagram_reel"}
+
+
+@router.get("/publishing/instagram/next")
+def next_instagram_publish(database: Session = Depends(get_db)) -> dict:
+    job = ReviewService(database).next_instagram_publish()
+    if job is None:
+        return {"status": "empty"}
+    return {"status": "uploading", "job_id": job.id, "campaign_id": job.campaign_id, "video_url": job.video_url, "caption": f"{job.social_caption}\n\n{' '.join(job.hashtags)}".strip()}
+
+
+@router.post("/publishing/instagram/{job_id}/complete")
+def complete_instagram_publish(job_id: int, request: InstagramPublishResult, database: Session = Depends(get_db)) -> dict[str, str]:
+    if not ReviewService(database).complete_instagram_publish(job_id, request.media_id):
+        raise HTTPException(status_code=404, detail="Instagram job not found.")
+    return {"status": "published"}
+
+
+@router.post("/publishing/instagram/{job_id}/fail")
+def fail_instagram_publish(job_id: int, request: InstagramPublishFailure, database: Session = Depends(get_db)) -> dict[str, str]:
+    if not ReviewService(database).fail_instagram_publish(job_id, request.error):
+        raise HTTPException(status_code=404, detail="Instagram job not found.")
     return {"status": "failed"}
 
 

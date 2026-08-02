@@ -141,6 +141,12 @@ class ReviewService:
                 "youtube_error": job.youtube_error,
                 "youtube_attempts": job.youtube_attempts,
                 "youtube_requested_at": job.youtube_requested_at,
+                "instagram_status": job.instagram_status,
+                "instagram_media_id": job.instagram_media_id,
+                "instagram_url": job.instagram_url,
+                "instagram_error": job.instagram_error,
+                "instagram_attempts": job.instagram_attempts,
+                "instagram_requested_at": job.instagram_requested_at,
             }
             for job, campaign in self.db.execute(statement).all()
         ]
@@ -274,6 +280,54 @@ class ReviewService:
             return False
         job.youtube_status = "failed"
         job.youtube_error = error[:2000]
+        self.db.commit()
+        return True
+
+    def queue_instagram_publish(self, campaign_id: int) -> bool:
+        job = self.db.scalar(select(ContentCreationJob).where(ContentCreationJob.campaign_id == campaign_id))
+        if job is None or not job.video_url or not job.social_caption:
+            return False
+        if job.instagram_status in {"queued", "uploading"}:
+            return True
+        job.instagram_status = "queued"
+        job.instagram_error = ""
+        job.instagram_requested_at = datetime.now(timezone.utc)
+        self.db.commit()
+        return True
+
+    def next_instagram_publish(self) -> ContentCreationJob | None:
+        stale = datetime.now(timezone.utc) - timedelta(minutes=15)
+        job = self.db.scalar(
+            select(ContentCreationJob)
+            .where(or_(ContentCreationJob.instagram_status == "queued", (ContentCreationJob.instagram_status == "uploading") & (ContentCreationJob.instagram_requested_at < stale)))
+            .order_by(ContentCreationJob.instagram_requested_at.asc())
+            .with_for_update(skip_locked=True)
+        )
+        if job is None:
+            return None
+        job.instagram_status = "uploading"
+        job.instagram_attempts += 1
+        self.db.commit()
+        self.db.refresh(job)
+        return job
+
+    def complete_instagram_publish(self, job_id: int, media_id: str) -> bool:
+        job = self.db.get(ContentCreationJob, job_id)
+        if job is None:
+            return False
+        job.instagram_status = "published"
+        job.instagram_media_id = media_id
+        job.instagram_url = "https://www.instagram.com/"
+        job.instagram_error = ""
+        self.db.commit()
+        return True
+
+    def fail_instagram_publish(self, job_id: int, error: str) -> bool:
+        job = self.db.get(ContentCreationJob, job_id)
+        if job is None:
+            return False
+        job.instagram_status = "failed"
+        job.instagram_error = error[:2000]
         self.db.commit()
         return True
 

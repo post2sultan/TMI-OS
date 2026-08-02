@@ -29,6 +29,14 @@ export function ApprovedPage() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
+  const publishInstagram = useMutation({
+    mutationFn: api.publishInstagramReel,
+    onSuccess: async () => {
+      toast.success("Public Instagram Reel queued.");
+      await queryClient.invalidateQueries({ queryKey: ["content-creation"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
   const generate = useMutation({
     mutationFn: api.generateContentPackage,
     onSuccess: async () => {
@@ -214,6 +222,18 @@ export function ApprovedPage() {
                     )}
                     Queue private YouTube upload
                   </button>
+                  <button
+                    type="button"
+                    disabled={!job?.video_url || publishInstagram.isPending}
+                    onClick={() => {
+                      if (window.confirm("Publish this Reel publicly on Instagram?")) {
+                        publishInstagram.mutate(item.campaign_id);
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-pink-700 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-800 disabled:opacity-50"
+                  >
+                    Publish Instagram Reel (public)
+                  </button>
                 </div>
               </div>
               {preview.campaignId === item.campaign_id ? (
@@ -228,6 +248,11 @@ export function ApprovedPage() {
                 <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
                   YouTube: {job.youtube_status}
                   {job.youtube_error ? ` — ${job.youtube_error}` : ""}
+                </div>
+              ) : null}
+              {job?.instagram_status && job.instagram_status !== "not_queued" ? (
+                <div className="mt-3 rounded-xl border border-pink-100 bg-pink-50 px-4 py-3 text-sm text-pink-900">
+                  Instagram: {job.instagram_status}{job.instagram_error ? ` — ${job.instagram_error}` : ""}
                 </div>
               ) : null}
               {generated ? (

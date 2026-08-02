@@ -158,6 +158,11 @@ export const api = {
     request<ActionResponse>(`/campaigns/${campaignId}/publish`, {
       method: "POST",
     }),
+
+  publishInstagramReel: (campaignId: number) =>
+    request<ActionResponse>(`/campaigns/${campaignId}/publishing/instagram`, {
+      method: "POST",
+    }),
 };
 
 export { API_BASE_URL };
