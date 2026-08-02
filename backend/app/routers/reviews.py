@@ -264,6 +264,27 @@ def fail_instagram_publish(job_id: int, request: InstagramPublishFailure, databa
         raise HTTPException(status_code=404, detail="Instagram job not found.")
     return {"status": "failed"}
 
+@router.post("/campaigns/{campaign_id}/publishing/instagram-story")
+def queue_instagram_story(campaign_id: int, database: Session = Depends(get_db)) -> dict[str,str]:
+    if not ReviewService(database).queue_instagram_story(campaign_id): raise HTTPException(status_code=409,detail="Generated video is required.")
+    return {"status":"queued_public_instagram_story"}
+
+@router.get("/publishing/instagram-story/next")
+def next_instagram_story(database: Session = Depends(get_db)) -> dict:
+    job=ReviewService(database).next_instagram_story()
+    if job is None: return {"status":"empty"}
+    return {"status":"uploading","job_id":job.id,"campaign_id":job.campaign_id,"video_url":job.video_url,"caption":""}
+
+@router.post("/publishing/instagram-story/{job_id}/complete")
+def complete_instagram_story(job_id:int,request:InstagramPublishResult,database:Session=Depends(get_db))->dict[str,str]:
+    if not ReviewService(database).complete_instagram_story(job_id,request.media_id): raise HTTPException(status_code=404,detail="Instagram Story job not found.")
+    return {"status":"published"}
+
+@router.post("/publishing/instagram-story/{job_id}/fail")
+def fail_instagram_story(job_id:int,request:InstagramPublishFailure,database:Session=Depends(get_db))->dict[str,str]:
+    if not ReviewService(database).fail_instagram_story(job_id,request.error): raise HTTPException(status_code=404,detail="Instagram Story job not found.")
+    return {"status":"failed"}
+
 
 @router.post(
     "/campaigns/{campaign_id}/reject",

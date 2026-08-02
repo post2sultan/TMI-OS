@@ -70,6 +70,11 @@ export interface ContentCreationItem {
   instagram_error: string;
   instagram_attempts: number;
   instagram_requested_at: string | null;
+  instagram_story_status: string;
+  instagram_story_media_id: string;
+  instagram_story_error: string;
+  instagram_story_attempts: number;
+  instagram_story_requested_at: string | null;
 }
 
 export interface VoicePreviewResponse {

@@ -37,6 +37,11 @@ export function ApprovedPage() {
     },
     onError: (error: Error) => toast.error(error.message),
   });
+  const publishStory = useMutation({
+    mutationFn: api.publishInstagramStory,
+    onSuccess: async () => { toast.success("Public Instagram Story queued."); await queryClient.invalidateQueries({ queryKey: ["content-creation"] }); },
+    onError: (error: Error) => toast.error(error.message),
+  });
   const generate = useMutation({
     mutationFn: api.generateContentPackage,
     onSuccess: async () => {
@@ -234,6 +239,11 @@ export function ApprovedPage() {
                   >
                     Publish Instagram Reel (public)
                   </button>
+                  <button type="button" disabled={!job?.video_url || publishStory.isPending}
+                    onClick={() => { if (window.confirm("Publish this Story publicly on Instagram?")) publishStory.mutate(item.campaign_id); }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-800 disabled:opacity-50">
+                    Publish Instagram Story (public)
+                  </button>
                 </div>
               </div>
               {preview.campaignId === item.campaign_id ? (
@@ -253,6 +263,11 @@ export function ApprovedPage() {
               {job?.instagram_status && job.instagram_status !== "not_queued" ? (
                 <div className="mt-3 rounded-xl border border-pink-100 bg-pink-50 px-4 py-3 text-sm text-pink-900">
                   Instagram: {job.instagram_status}{job.instagram_error ? ` — ${job.instagram_error}` : ""}
+                </div>
+              ) : null}
+              {job?.instagram_story_status && job.instagram_story_status !== "not_queued" ? (
+                <div className="mt-3 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+                  Instagram Story: {job.instagram_story_status}{job.instagram_story_error ? ` — ${job.instagram_story_error}` : ""}
                 </div>
               ) : null}
               {generated ? (

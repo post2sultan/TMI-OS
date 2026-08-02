@@ -109,6 +109,21 @@ class CampaignReviewServiceTests(unittest.TestCase):
         self.assertIsNotNone(job.instagram_requested_at)
         database.commit.assert_called_once()
 
+    def test_instagram_story_requires_video_and_queues_public_job(self) -> None:
+        database = Mock()
+        job = SimpleNamespace(
+            video_url="/media/campaign-7/video.mp4",
+            instagram_story_status="not_queued",
+            instagram_story_error="old",
+            instagram_story_requested_at=None,
+        )
+        database.scalar.return_value = job
+        self.assertTrue(ReviewService(database).queue_instagram_story(7))
+        self.assertEqual(job.instagram_story_status, "queued")
+        self.assertEqual(job.instagram_story_error, "")
+        self.assertIsNotNone(job.instagram_story_requested_at)
+        database.commit.assert_called_once()
+
     def test_edit_creates_new_analysis_without_overwriting_original(self) -> None:
         database = Mock()
         campaign = SimpleNamespace(id=7, status="needs_review")
