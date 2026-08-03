@@ -11,10 +11,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.content_creation_job import ContentCreationJob
+from app.models.campaign import Campaign
+from app.services.stock_media_service import StockMediaService
 
 
 class LocalVideoService:
-    """Build a local voiceover and launch-ready vertical video."""
+    """Build watermarked vertical and landscape videos from cached stock media."""
 
     VOICES = {
         "af_heart", "af_bella", "af_nicole", "am_adam",
@@ -40,45 +42,34 @@ class LocalVideoService:
         self._validate_voice(voice_name)
         if not shutil.which("ffmpeg"):
             raise ValueError("Local media tools are unavailable.")
+        campaign = self.db.get(Campaign, campaign_id)
+        if campaign is None:
+            raise ValueError("Campaign was not found.")
 
         target = self.media_root / f"campaign-{campaign_id}"
         target.mkdir(parents=True, exist_ok=True)
         audio = target / "voiceover.wav"
         video = target / "video.mp4"
+        landscape = target / "video-landscape.mp4"
         subtitles = target / "captions.srt"
+        logo = Path("/app/assets/brand/tmi-logo.png")
+        if not logo.is_file():
+            logo = Path(__file__).resolve().parents[2] / "assets" / "brand" / "tmi-logo.png"
+        if not logo.is_file():
+            raise ValueError("The mandatory TMI logo watermark is unavailable.")
 
         self._synthesize(job.video_script, voice_name, audio)
         duration = self._duration(audio)
         subtitles.write_text(
             self._subtitles(job.video_script, duration), encoding="utf-8"
         )
-        subprocess.run(
-            [
-                "ffmpeg", "-y",
-                "-f", "lavfi", "-i", "color=c=0x071A2B:s=1080x1920:r=30",
-                "-i", str(audio),
-                "-vf",
-                (
-                    "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/"
-                    "DejaVuSans-Bold.ttf:text='TMI OS':fontcolor=0x45D6A8:"
-                    "fontsize=72:x=(w-text_w)/2:y=170,"
-                    "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/"
-                    "DejaVuSans.ttf:text='THE MIYAR INDEX':fontcolor=white:"
-                    "fontsize=38:x=(w-text_w)/2:y=270,"
-                    "subtitles=captions.srt:force_style='FontName=DejaVu Sans,"
-                    "FontSize=18,PrimaryColour=&H00FFFFFF,OutlineColour=&H00102030,"
-                    "BorderStyle=3,Outline=2,Alignment=2,MarginV=220'"
-                ),
-                "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-                "-c:a", "aac", "-b:a", "128k", "-pix_fmt", "yuv420p",
-                "-shortest", "-movflags", "+faststart", str(video),
-            ],
-            cwd=target,
-            check=True,
-            capture_output=True,
-            timeout=600,
-        )
-        if audio.stat().st_size < 1000 or video.stat().st_size < 10_000:
+        try:
+            stock = StockMediaService().collect(campaign, target / "stock")
+        except Exception:
+            stock = []
+        self._render(stock, audio, subtitles, logo, video, 1080, 1920, duration)
+        self._render(stock, audio, subtitles, logo, landscape, 1920, 1080, duration)
+        if any(path.stat().st_size < minimum for path, minimum in ((audio, 1000), (video, 10_000), (landscape, 10_000))):
             raise ValueError("Local media generation produced an invalid file.")
 
         job.audio_url = f"/api/media/campaign-{campaign_id}/voiceover.wav"
@@ -89,6 +80,46 @@ class LocalVideoService:
         self.db.commit()
         self.db.refresh(job)
         return job
+
+    @staticmethod
+    def _render(stock: list[Path], audio: Path, subtitles: Path, logo: Path,
+                output: Path, width: int, height: int, duration: float) -> None:
+        target = output.parent
+        normalized: list[Path] = []
+        for index, source in enumerate(stock[:3]):
+            clip = target / f"clip-{width}x{height}-{index:02}.mp4"
+            subprocess.run([
+                "ffmpeg", "-y", "-i", str(source), "-t", "6", "-an",
+                "-vf", f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},fps=30",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-pix_fmt", "yuv420p", str(clip),
+            ], check=True, capture_output=True, timeout=180)
+            normalized.append(clip)
+
+        if normalized:
+            listing = target / f"clips-{width}x{height}.txt"
+            listing.write_text("".join(f"file '{path.name}'\n" for path in normalized), encoding="utf-8")
+            visual = ["-stream_loop", "-1", "-f", "concat", "-safe", "0", "-i", listing.name]
+        else:
+            visual = ["-f", "lavfi", "-i", f"color=c=0x034C6B:s={width}x{height}:r=30"]
+
+        logo_width = 250 if height > width else 320
+        margin = 50 if height > width else 65
+        subtitle_size = 18 if height > width else 22
+        margin_v = 220 if height > width else 105
+        filters = (
+            f"[0:v]drawbox=x=0:y=0:w=iw:h=ih:color=0x034C6B@0.18:t=fill,"
+            f"drawbox=x=0:y=0:w=iw:h=10:color=0xF37F17@0.85:t=fill,"
+            f"subtitles={subtitles.name}:force_style='FontName=Noto Sans,FontSize={subtitle_size},"
+            f"PrimaryColour=&H00FFFFFF,OutlineColour=&H00034C6B,BorderStyle=3,Outline=2,"
+            f"Alignment=2,MarginV={margin_v}'[base];"
+            f"[2:v]scale={logo_width}:-1[mark];[base][mark]overlay=W-w-{margin}:{margin}:format=auto[v]"
+        )
+        subprocess.run([
+            "ffmpeg", "-y", *visual, "-i", str(audio), "-loop", "1", "-i", str(logo),
+            "-filter_complex", filters, "-map", "[v]", "-map", "1:a", "-t", f"{duration:.3f}",
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-c:a", "aac", "-b:a", "128k",
+            "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(output),
+        ], cwd=target, check=True, capture_output=True, timeout=600)
 
     @classmethod
     def preview(

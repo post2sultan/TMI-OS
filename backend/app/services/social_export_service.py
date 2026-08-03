@@ -30,6 +30,7 @@ class SocialExportService:
 
         campaign_dir = self.media_root / f"campaign-{campaign_id}"
         video = campaign_dir / "video.mp4"
+        landscape_source = campaign_dir / "video-landscape.mp4"
         if not video.is_file() or video.stat().st_size < 10_000:
             raise ValueError("Generated campaign video was not found.")
 
@@ -37,7 +38,10 @@ class SocialExportService:
         export_dir.mkdir(parents=True, exist_ok=True)
         youtube = export_dir / "youtube-video-1920x1080.mp4"
         linkedin = export_dir / "linkedin-post-1080x1080.mp4"
-        self._render(video, youtube, "1920:1080")
+        if landscape_source.is_file() and landscape_source.stat().st_size >= 10_000:
+            youtube.write_bytes(landscape_source.read_bytes())
+        else:
+            self._render(video, youtube, "1920:1080")
         self._render(video, linkedin, "1080:1080")
         package = export_dir / f"campaign-{campaign_id}-social-package.zip"
         caption = f"{job.social_caption.strip()}\n\n{' '.join(job.hashtags)}\n"

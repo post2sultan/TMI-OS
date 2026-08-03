@@ -85,6 +85,12 @@ class Settings(BaseSettings):
     SERPER_URL: str = "https://google.serper.dev/search"
     SERPER_TIMEOUT: int = Field(default=30, ge=1, le=120)
 
+    PEXELS_API_KEY: SecretStr = Field(default=SecretStr(""))
+    PIXABAY_API_KEY: SecretStr = Field(default=SecretStr(""))
+    STOCK_MEDIA_MAX_SEARCHES: int = Field(default=3, ge=1, le=3)
+    STOCK_MEDIA_MAX_ASSETS: int = Field(default=6, ge=1, le=6)
+    STOCK_MEDIA_TIMEOUT_SECONDS: int = Field(default=30, ge=5, le=120)
+
     REDIS_PASSWORD: SecretStr = Field(default=SecretStr(""))
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = Field(default=6379, ge=1, le=65535)

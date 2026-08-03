@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends espeak-ng ffmpeg fonts-dejavu-core \
+    && apt-get install -y --no-install-recommends espeak-ng ffmpeg fonts-dejavu-core fonts-noto-core \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --system tmi \
@@ -26,6 +26,7 @@ COPY --chown=tmi:tmi alembic.ini ./alembic.ini
 COPY --chown=tmi:tmi alembic ./alembic
 COPY --chown=tmi:tmi app ./app
 COPY --chown=tmi:tmi prompts ./prompts
+COPY --chown=tmi:tmi assets ./assets
 
 USER tmi
 

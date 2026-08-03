@@ -329,6 +329,20 @@ export function ApprovedPage() {
                       >
                         Download MP4
                       </a>
+                      <a
+                        href={job.video_url.replace("video.mp4", "video-landscape.mp4")}
+                        download
+                        className="ml-4 inline-flex font-semibold text-sky-700 hover:underline"
+                      >
+                        Download landscape MP4
+                      </a>
+                      <a
+                        href={job.video_url.replace("video.mp4", "stock/media-manifest.json")}
+                        download
+                        className="ml-4 inline-flex font-semibold text-slate-700 hover:underline"
+                      >
+                        Stock credits
+                      </a>
                     </div>
                   ) : null}
                 </div>
