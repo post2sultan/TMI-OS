@@ -102,17 +102,18 @@ class LocalVideoService:
         else:
             visual = ["-f", "lavfi", "-i", f"color=c=0x034C6B:s={width}x{height}:r=30"]
 
-        logo_width = 250 if height > width else 320
-        margin = 50 if height > width else 65
+        logo_width = 170 if height > width else 220
+        margin = 40 if height > width else 55
         subtitle_size = 18 if height > width else 22
         margin_v = 220 if height > width else 105
         filters = (
             f"[0:v]drawbox=x=0:y=0:w=iw:h=ih:color=0x034C6B@0.18:t=fill,"
-            f"drawbox=x=0:y=0:w=iw:h=10:color=0xF37F17@0.85:t=fill,"
-            f"subtitles={subtitles.name}:force_style='FontName=Noto Sans,FontSize={subtitle_size},"
-            f"PrimaryColour=&H00FFFFFF,OutlineColour=&H00034C6B,BorderStyle=3,Outline=2,"
-            f"Alignment=2,MarginV={margin_v}'[base];"
-            f"[2:v]scale={logo_width}:-1[mark];[base][mark]overlay=W-w-{margin}:{margin}:format=auto[v]"
+            f"drawbox=x=0:y=0:w=iw:h=10:color=0xF37F17@0.85:t=fill[base];"
+            f"[2:v]scale={logo_width}:-1[mark];"
+            f"[base][mark]overlay=W-w-{margin}:{margin}:format=auto[branded];"
+            f"[branded]subtitles={subtitles.name}:force_style='FontName=Noto Sans,FontSize={subtitle_size},"
+            f"PrimaryColour=&H00FFFFFF,OutlineColour=&H006B4C03,BorderStyle=3,Outline=2,"
+            f"Alignment=2,MarginL=80,MarginR=80,MarginV={margin_v}'[v]"
         )
         subprocess.run([
             "ffmpeg", "-y", *visual, "-i", str(audio), "-loop", "1", "-i", str(logo),
