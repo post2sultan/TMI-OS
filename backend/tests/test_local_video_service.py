@@ -12,6 +12,7 @@ class LocalVideoServiceTests(TestCase):
         self.assertIn("00:00:00,000 -->", output)
         self.assertIn("word19", output)
         self.assertEqual(output.count("-->"), 3)
+        self.assertIn("word1 word2 word3 word4 word5 word6 word7\n", output)
 
     def test_timestamp_format(self) -> None:
         self.assertEqual(

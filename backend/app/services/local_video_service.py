@@ -102,18 +102,18 @@ class LocalVideoService:
         else:
             visual = ["-f", "lavfi", "-i", f"color=c=0x034C6B:s={width}x{height}:r=30"]
 
-        logo_width = 170 if height > width else 220
+        logo_width = 130 if height > width else 180
         margin = 40 if height > width else 55
-        subtitle_size = 18 if height > width else 22
+        subtitle_size = 10
         margin_v = 220 if height > width else 105
         filters = (
             f"[0:v]drawbox=x=0:y=0:w=iw:h=ih:color=0x034C6B@0.18:t=fill,"
             f"drawbox=x=0:y=0:w=iw:h=10:color=0xF37F17@0.85:t=fill[base];"
             f"[2:v]scale={logo_width}:-1[mark];"
-            f"[base][mark]overlay=W-w-{margin}:{margin}:format=auto[branded];"
+            f"[base][mark]overlay=W-w-{margin}:H-h-{margin}:format=auto[branded];"
             f"[branded]subtitles={subtitles.name}:force_style='FontName=Noto Sans,FontSize={subtitle_size},"
             f"PrimaryColour=&H00FFFFFF,OutlineColour=&H006B4C03,BorderStyle=3,Outline=2,"
-            f"Alignment=2,MarginL=80,MarginR=80,MarginV={margin_v}'[v]"
+            f"Alignment=2,MarginL=120,MarginR=120,MarginV={margin_v}'[v]"
         )
         subprocess.run([
             "ffmpeg", "-y", *visual, "-i", str(audio), "-loop", "1", "-i", str(logo),
@@ -178,7 +178,7 @@ class LocalVideoService:
     @staticmethod
     def _subtitles(script: str, duration: float) -> str:
         words = re.findall(r"\S+", script)
-        chunks = [" ".join(words[index:index + 9]) for index in range(0, len(words), 9)]
+        chunks = [" ".join(words[index:index + 7]) for index in range(0, len(words), 7)]
         slot = duration / max(len(chunks), 1)
         entries = []
         for index, chunk in enumerate(chunks):
