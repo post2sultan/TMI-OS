@@ -88,19 +88,24 @@ class LocalVideoService:
         normalized: list[Path] = []
         for index, source in enumerate(stock[:3]):
             clip = target / f"clip-{width}x{height}-{index:02}.mp4"
-            subprocess.run([
-                "ffmpeg", "-y", "-i", str(source), "-t", "6", "-an",
-                "-vf", f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},fps=30",
-                "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-pix_fmt", "yuv420p", str(clip),
-            ], check=True, capture_output=True, timeout=180)
-            normalized.append(clip)
+            try:
+                subprocess.run([
+                    "ffmpeg", "-y", "-i", str(source), "-t", "6", "-an",
+                    "-vf", f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},fps=30",
+                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-pix_fmt", "yuv420p", str(clip),
+                ], check=True, capture_output=True, timeout=180)
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                clip.unlink(missing_ok=True)
+                continue
+            if clip.is_file() and clip.stat().st_size >= 10_000:
+                normalized.append(clip)
 
-        if normalized:
+        def visual_input(clips: list[Path]) -> list[str]:
+            if not clips:
+                return ["-f", "lavfi", "-i", f"color=c=0x034C6B:s={width}x{height}:r=30"]
             listing = target / f"clips-{width}x{height}.txt"
-            listing.write_text("".join(f"file '{path.name}'\n" for path in normalized), encoding="utf-8")
-            visual = ["-stream_loop", "-1", "-f", "concat", "-safe", "0", "-i", listing.name]
-        else:
-            visual = ["-f", "lavfi", "-i", f"color=c=0x034C6B:s={width}x{height}:r=30"]
+            listing.write_text("".join(f"file '{path.name}'\n" for path in clips), encoding="utf-8")
+            return ["-stream_loop", "-1", "-f", "concat", "-safe", "0", "-i", listing.name]
 
         logo_width = 130 if height > width else 180
         margin = 40 if height > width else 55
@@ -115,12 +120,32 @@ class LocalVideoService:
             f"PrimaryColour=&H00FFFFFF,OutlineColour=&H006B4C03,BorderStyle=3,Outline=2,"
             f"Alignment=2,MarginL=120,MarginR=120,MarginV={margin_v}'[v]"
         )
-        subprocess.run([
-            "ffmpeg", "-y", *visual, "-i", str(audio), "-loop", "1", "-i", str(logo),
-            "-filter_complex", filters, "-map", "[v]", "-map", "1:a", "-t", f"{duration:.3f}",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-c:a", "aac", "-b:a", "128k",
-            "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(output),
-        ], cwd=target, check=True, capture_output=True, timeout=600)
+        temporary = output.with_name(f"{output.stem}.tmp{output.suffix}")
+
+        def encode(clips: list[Path]) -> None:
+            temporary.unlink(missing_ok=True)
+            subprocess.run([
+                "ffmpeg", "-y", *visual_input(clips), "-i", str(audio), "-loop", "1", "-i", str(logo),
+                "-filter_complex", filters, "-map", "[v]", "-map", "1:a", "-t", f"{duration:.3f}",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-c:a", "aac", "-b:a", "128k",
+                "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(temporary),
+            ], cwd=target, check=True, capture_output=True, timeout=600)
+
+        try:
+            encode(normalized)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            if not normalized:
+                temporary.unlink(missing_ok=True)
+                raise ValueError("Video rendering failed using the local fallback.") from None
+            try:
+                encode([])
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                temporary.unlink(missing_ok=True)
+                raise ValueError("Video rendering failed using stock media and the local fallback.") from None
+        if not temporary.is_file() or temporary.stat().st_size < 10_000:
+            temporary.unlink(missing_ok=True)
+            raise ValueError("Video rendering produced an invalid file.")
+        temporary.replace(output)
 
     @classmethod
     def preview(
