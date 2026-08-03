@@ -123,6 +123,20 @@ def _cluster_dict(cluster: CampaignCluster) -> dict:
     }
 
 
+def _parse_cluster_ids(value: str) -> list[int]:
+    parsed: list[int] = []
+    for item in value.split(","):
+        try:
+            cluster_id = int(item.strip())
+        except ValueError:
+            continue
+        if cluster_id > 0 and cluster_id not in parsed:
+            parsed.append(cluster_id)
+        if len(parsed) == 200:
+            break
+    return parsed
+
+
 @router.post("/discover", status_code=201)
 def discover_signals(request: RadarDiscoveryRequest, database: Session = Depends(get_db)) -> dict:
     watchlist = None
@@ -228,12 +242,17 @@ def list_clusters(
     status: str | None = None,
     min_confidence: float = 0.0,
     sort: str = "recent",
+    ids: str = "",
     database: Session = Depends(get_db),
 ) -> dict:
     safe_limit = min(max(limit, 1), 200)
     safe_offset = max(offset, 0)
     query = select(CampaignCluster).where(CampaignCluster.confidence_score >= min(max(min_confidence, 0.0), 1.0))
     count_query = select(func.count(CampaignCluster.id)).where(CampaignCluster.confidence_score >= min(max(min_confidence, 0.0), 1.0))
+    selected_ids = _parse_cluster_ids(ids)
+    if selected_ids:
+        query = query.where(CampaignCluster.id.in_(selected_ids))
+        count_query = count_query.where(CampaignCluster.id.in_(selected_ids))
     if status:
         query = query.where(CampaignCluster.status == status)
         count_query = count_query.where(CampaignCluster.status == status)

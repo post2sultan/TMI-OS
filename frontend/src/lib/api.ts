@@ -99,6 +99,11 @@ export const api = {
       `/radar/clusters?sort=${encodeURIComponent(sort)}&status=${encodeURIComponent(status)}&limit=${limit}`,
     ),
 
+  listRadarClustersByIds: (clusterIds: number[]) =>
+    request<RadarClusterListResponse>(
+      `/radar/clusters?sort=trend&limit=200&ids=${encodeURIComponent(clusterIds.join(","))}`,
+    ),
+
   listRadarWatchlists: () =>
     request<RadarWatchlistListResponse>("/radar/watchlists"),
 

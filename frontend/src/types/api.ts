@@ -136,6 +136,7 @@ export interface AnalysisResponse {
 
 export interface DiscoverySaveResponse {
   query: string;
+  queries_executed: string[];
   discovered: number;
   qualified: number;
   rejected: number;
@@ -143,6 +144,8 @@ export interface DiscoverySaveResponse {
   skipped: number;
   rejection_reasons: Record<string, number>;
   campaign_ids: number[];
+  signal_ids: number[];
+  cluster_ids: number[];
 }
 
 export interface DiscoveryHistoryItem {
