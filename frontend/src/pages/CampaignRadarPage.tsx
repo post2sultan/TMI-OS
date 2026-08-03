@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ErrorState, LoadingState, NoDataState } from "../components/shared/LiveState";
 import { api } from "../lib/api";
 import { formatDate } from "../lib/format";
+import type { DiscoverySaveResponse, RadarCluster } from "../types/api";
 
 function scoreTone(score: number) {
   if (score >= 70) return "bg-emerald-100 text-emerald-800";
@@ -17,6 +18,8 @@ export function CampaignRadarPage() {
   const [prompt, setPrompt] = useState("");
   const [status, setStatus] = useState("");
   const [watchlistId, setWatchlistId] = useState<number | null>(null);
+  const [latestScan, setLatestScan] = useState<DiscoverySaveResponse | null>(null);
+  const [latestCandidates, setLatestCandidates] = useState<RadarCluster[]>([]);
   const queryClient = useQueryClient();
 
   const clusters = useQuery({
@@ -37,6 +40,11 @@ export function CampaignRadarPage() {
     mutationFn: () => watchlistId ? api.discoverWatchlist(watchlistId) : api.discoverAndSave(prompt.trim()),
     onSuccess: async (result) => {
       toast.success(`Scan complete: ${result.created} new signals, ${result.skipped} seen again.`);
+      setLatestScan(result);
+      const latest = result.cluster_ids.length > 0
+        ? await api.listRadarClustersByIds(result.cluster_ids)
+        : { items: [] };
+      setLatestCandidates(latest.items);
       setPrompt("");
       await refreshRadar();
     },
@@ -107,6 +115,42 @@ export function CampaignRadarPage() {
           </button>
         </div>
       </form>
+
+      {latestScan ? (
+        <section className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5 shadow-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Latest scan results</p>
+              <h2 className="mt-1 font-semibold text-slate-950">{latestScan.query}</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                {latestScan.discovered} provider hits · {latestScan.qualified} qualified · {latestScan.created} new · {latestScan.skipped} seen again
+              </p>
+            </div>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-blue-800">
+              {latestCandidates.length} candidates shown
+            </span>
+          </div>
+          {latestCandidates.length === 0 ? (
+            <p className="mt-4 rounded-xl bg-white p-4 text-sm text-slate-600">
+              This scan returned no qualified campaign candidates. Provider hits may have been rejected as irrelevant or duplicate.
+            </p>
+          ) : (
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              {latestCandidates.map((candidate) => (
+                <article key={candidate.id} className="rounded-xl border border-blue-100 bg-white p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div><p className="text-xs font-semibold text-blue-700">Candidate #{candidate.id}</p><h3 className="mt-1 text-sm font-semibold text-slate-950">{candidate.title}</h3></div>
+                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${scoreTone(candidate.trend_score)}`}>{candidate.trend_score}</span>
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    {candidate.promoted_campaign_id ? <Link to={`/campaigns/${candidate.promoted_campaign_id}`} className="text-sm font-semibold text-emerald-700">Campaign #{candidate.promoted_campaign_id}</Link> : <button type="button" disabled={promotion.isPending} onClick={() => promotion.mutate(candidate.id)} className="rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">Confirm as campaign</button>}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
